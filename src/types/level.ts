@@ -1,26 +1,15 @@
-// src/types/user.ts
+// src/types/level.ts
+import type { Category, Difficulty } from "./question";
 
-export interface UserProgress {
-  levelId: number; // Level the user has progressed in
-  completed: boolean; // Did the user finish this level?
-  questionsAnswered: string[]; // IDs of questions answered in this level
-  xpEarned: number; // XP earned in this level
-}
-
-export interface Achievement {
-  id: string;
-  title: string;
+export interface Level {
+  id: number; // Unique level ID
+  title: string; // Display name for the level
   description?: string;
-  unlocked: boolean;
-}
-
-export interface User {
-  id: string; // Unique identifier for the player
-  name: string; // Player name or nickname
-  avatar?: string; // Optional avatar image or emoji
-  currentLevelId: number; // Level currently playing
-  totalXp: number; // Accumulated XP
-  progress: UserProgress[]; // Track progress per level
-  achievements: Achievement[]; // Badges, milestones, or unlocked rewards
-  streak?: number; // Optional daily or consecutive play streak
+  completed: boolean; // Has the player completed it?
+  unlocked: boolean; // Is the level available to the player?
+  icon?: string;
+  questionIDs: string[];
+  categories: Category[]; // Categories included in this level
+  difficulty: Difficulty; // Difficulty for all questions in this level
+  xpReward?: number; // XP awarded for completing the level
 }
