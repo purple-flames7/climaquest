@@ -3,11 +3,11 @@
 export type Difficulty = "easy" | "medium" | "hard";
 
 export type Category =
-  | "Climate Basics"
-  | "Everyday Actions"
   | "Climate Justice & Inequality"
-  | "Feminist & Queer Climate Heroes"
-  | "Global Challenges & Solutions";
+  | "Climate Science"
+  | "Queer & Feminist Climate Futures"
+  | "Community Knowledge"
+  | "Climate Solutions";
 
 // Question Types
 
