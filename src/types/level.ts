@@ -11,5 +11,5 @@ export interface Level {
   questionIDs: string[];
   categories: Category[]; // Categories included in this level
   difficulty: Difficulty; // Difficulty for all questions in this level
-  xpReward?: number; // XP awarded for completing the level
+  xpReward: number; // XP awarded for completing the level
 }

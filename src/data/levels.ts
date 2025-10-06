@@ -66,7 +66,7 @@ export const levels: Level[] = Array.from({ length: 30 }, (_, i) => {
     categories, // all categories included in each level
     difficulty,
     questionIDs: [], // dynamically filled per user
-    xpReward: difficulty === "easy" ? 50 : difficulty === "medium" ? 100 : 150,
+    xpReward: difficulty === "easy" ? 10 : difficulty === "medium" ? 15 : 20,
   };
 });
 
