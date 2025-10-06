@@ -1,9 +1,10 @@
 // src/data/levels.ts
+
 import type { Level } from "../types/level";
 import type { Category } from "../types/question";
-import { allQuestions } from "./allQuestions";
+import { allQuestionsById } from "./allQuestions";
 
-// The categories for each level
+// The categories for levels
 export const categories: Category[] = [
   "Climate Science",
   "Climate Justice & Inequality",
@@ -12,7 +13,7 @@ export const categories: Category[] = [
   "Climate Solutions",
 ];
 
-// Thematic level titles
+// Level titles
 const levelTitles: string[] = [
   // Easy (1–10)
   "Sprout of Awareness",
@@ -51,7 +52,7 @@ const levelTitles: string[] = [
   "Horizon Reimagined",
 ];
 
-// Static level definitions
+// Create levels
 export const levels: Level[] = Array.from({ length: 30 }, (_, i) => {
   let difficulty: "easy" | "medium" | "hard" = "easy";
   if (i >= 20) difficulty = "hard";
@@ -61,23 +62,23 @@ export const levels: Level[] = Array.from({ length: 30 }, (_, i) => {
     id: i + 1,
     title: levelTitles[i],
     completed: false,
-    unlocked: i === 0, // first level unlocked by default
-    categories,
+    unlocked: i === 0,
+    categories, // all categories included in each level
     difficulty,
-    questionIDs: [], // will be dynamically populated per user
+    questionIDs: [], // dynamically filled per user
     xpReward: difficulty === "easy" ? 50 : difficulty === "medium" ? 100 : 150,
   };
 });
 
-// Helper to dynamically pick questions for a user
 export function pickQuestionsForUser(
   level: Level,
   answeredQuestions: Record<string, boolean>,
   allowRepeats = false
 ): string[] {
   return level.categories.map((category) => {
-    let pool = allQuestions[category].filter(
-      (q) => q.difficulty === level.difficulty
+    // Filter all questions by category and difficulty
+    let pool = Object.values(allQuestionsById).filter(
+      (q) => q.category === category && q.difficulty === level.difficulty
     );
 
     if (!allowRepeats) {
@@ -85,13 +86,13 @@ export function pickQuestionsForUser(
     }
 
     if (pool.length === 0) {
-      // fallback: all questions have been used
-      pool = allQuestions[category].filter(
-        (q) => q.difficulty === level.difficulty
+      // fallback: if all questions used, allow repeats
+      pool = Object.values(allQuestionsById).filter(
+        (q) => q.category === category && q.difficulty === level.difficulty
       );
     }
 
     const randomIndex = Math.floor(Math.random() * pool.length);
-    return pool[randomIndex]?.id || "";
+    return pool[randomIndex]?.id || ""; // return empty string if pool somehow empty
   });
 }
