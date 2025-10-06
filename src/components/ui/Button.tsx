@@ -7,6 +7,7 @@ interface ButtonProps {
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
   icon?: React.ReactNode;
+  className?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -16,6 +17,7 @@ export const Button: React.FC<ButtonProps> = ({
   size = "md",
   disabled = false,
   icon,
+  className = "", // default empty
 }) => {
   const base =
     "font-semibold rounded transition-colors duration-200 flex items-center justify-center";
@@ -36,7 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled}
       className={`${base} ${sizes[size]} ${variants[variant]} ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
-      }`}
+      } ${className}`}
     >
       {icon && <span className="mr-2">{icon}</span>}
       {label}
