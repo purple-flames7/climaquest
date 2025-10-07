@@ -16,7 +16,7 @@ export default function SplashScreen() {
     const timer = setTimeout(() => {
       setShowLogo(false);
       setTimeout(() => navigate("/home"), 500);
-    }, 5000); // increased duration
+    }, 4000);
     return () => clearTimeout(timer);
   }, [navigate]);
 
