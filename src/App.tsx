@@ -1,16 +1,18 @@
 // src/App.tsx
-import { BrowserRouter as Router, Routes, Route } from "react-router";
-import SplashScreen from "./Screens/SplashScreen";
-import HomeScreen from "./Screens/HomeScreen";
+import { Routes, Route } from "react-router"; //
+import SplashScreen from "./screens/SplashScreen";
+import HomeScreen from "./screens/HomeScreen";
+import TutorialScreen from "./screens/TutorialScreen";
+import ProgressMap from "./screens/ProgressMap";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<SplashScreen />} />
-        <Route path="/home" element={<HomeScreen />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<SplashScreen />} />
+      <Route path="/home" element={<HomeScreen />} />
+      <Route path="/tutorial" element={<TutorialScreen />} />
+      <Route path="/progress-map" element={<ProgressMap />} />
+    </Routes>
   );
 }
 

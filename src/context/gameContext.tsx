@@ -14,6 +14,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [xp, setXp] = useState(0);
   const [completedQuestions, setCompletedQuestions] = useState<string[]>([]);
 
+  const [tutorialCompleted, setTutorialCompleted] = useState<boolean>(() => {
+    const stored = localStorage.getItem("tutorialCompleted");
+    return stored ? JSON.parse(stored) : false;
+  });
+
+  const completeTutorial = () => {
+    setTutorialCompleted(true);
+    localStorage.setItem("tutorialCompleted", "true");
+  };
+
   const currentLevel = levels[currentLevelIndex];
   const currentQuestionId = currentLevel.questionIDs[currentQuestionIndex];
   const currentQuestion = allQuestionsById[currentQuestionId];
@@ -55,6 +65,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setCurrentQuestionIndex(0);
     setCompletedQuestions([]);
     setXp(0);
+    localStorage.removeItem("tutorialCompleted");
+    setTutorialCompleted(false);
   };
 
   return (
@@ -69,6 +81,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         selectLevel,
         answerQuestion,
         resetGame,
+        tutorialCompleted,
+        completeTutorial,
       }}
     >
       {children}
