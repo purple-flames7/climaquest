@@ -17,7 +17,7 @@ export default function SplashScreen() {
   const text = "ClimaQuest";
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-green-200 via-emerald-300 to-teal-400">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-emerald-100 to-teal-200">
       {/* Logo Icon */}
       <motion.img
         src={logoIcon}

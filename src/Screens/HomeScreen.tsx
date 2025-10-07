@@ -14,7 +14,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center bg-gradient-to-b from-green-200 via-emerald-300 to-teal-400 p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen text-center bg-gradient-to-b from-emerald-100  to-teal-200 p-6">
       {/* Logo */}
       <motion.img
         src={logoIcon}
