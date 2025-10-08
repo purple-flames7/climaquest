@@ -1,5 +1,6 @@
+// src/screens/QuizScreen.tsx
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
 import { useGame } from "../context/useGame";
 import type {
@@ -8,45 +9,48 @@ import type {
   TrueFalseQuestion,
   ShortAnswerQuestion,
 } from "../types/question";
-import type { Level } from "../types/level";
 import { isMCQ, isTrueFalse, isShortAnswer } from "../utils/questionGuards";
-
-type QuizState = {
-  level: Level;
-  questions: Question[];
-};
+import { allQuestionsById } from "../data/allQuestions";
 
 export default function QuizScreen() {
-  const { state } = useLocation();
   const navigate = useNavigate();
-  const { answerQuestion, user, updateUser } = useGame(); // Removed unused variables
-
-  // Type-safe state from location
-  const { level, questions } = state as QuizState;
+  const { currentLevelIndex, levels, answerQuestion, user, updateUser } =
+    useGame();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [typedAnswer, setTypedAnswer] = useState<string>("");
+  const [typedAnswer, setTypedAnswer] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
 
-  const currentQuestion: Question = questions[currentQuestionIndex];
-  if (!currentQuestion) return <div>Loading...</div>;
+  // --- Defensive loading checks ---
+  const currentLevel = levels[currentLevelIndex];
+  if (!currentLevel) return <div>Loading level...</div>;
+
+  const questions: Question[] = currentLevel.questionIDs
+    .map((id) => allQuestionsById[id])
+    .filter(Boolean);
+
+  if (questions.length === 0) return <div>No questions available</div>;
+
+  const currentQuestion = questions[currentQuestionIndex];
+  if (!currentQuestion) return <div>Loading question...</div>;
 
   // --- Handle answer submission ---
   const handleSubmitAnswer = (answer?: string) => {
-    if (showFeedback) return; // prevent multiple submissions
+    if (showFeedback) return;
 
     let correct = false;
+
     if (isMCQ(currentQuestion) && answer) {
-      const mcq: MultipleChoiceQuestion = currentQuestion;
+      const mcq = currentQuestion as MultipleChoiceQuestion;
       correct = mcq.options[mcq.correctOptionIndex] === answer;
       setSelectedAnswer(answer);
     } else if (isTrueFalse(currentQuestion) && answer) {
-      const tf: TrueFalseQuestion = currentQuestion;
+      const tf = currentQuestion as TrueFalseQuestion;
       correct = tf.answer === (answer === "true");
       setSelectedAnswer(answer);
     } else if (isShortAnswer(currentQuestion)) {
-      const sa: ShortAnswerQuestion = currentQuestion;
+      const sa = currentQuestion as ShortAnswerQuestion;
       correct = sa.acceptableAnswers.some(
         (ans) => ans.toLowerCase() === typedAnswer.trim().toLowerCase()
       );
@@ -58,25 +62,27 @@ export default function QuizScreen() {
 
     // Update user progress
     const progressIndex = user.progress.findIndex(
-      (p) => p.levelId === level.id
+      (p) => p.levelId === currentLevel.id
     );
-    const newProgress: typeof user.progress = [...user.progress];
+    const newProgress = [...user.progress];
 
     if (progressIndex >= 0) {
       const levelProgress = { ...newProgress[progressIndex] };
-      levelProgress.questionsAnswered.push(currentQuestion.id);
-      if (correct) levelProgress.xpEarned += level.xpReward;
+      if (!levelProgress.questionsAnswered.includes(currentQuestion.id)) {
+        levelProgress.questionsAnswered.push(currentQuestion.id);
+        if (correct) levelProgress.xpEarned += currentLevel.xpReward;
+      }
       newProgress[progressIndex] = levelProgress;
     } else {
       newProgress.push({
-        levelId: level.id,
+        levelId: currentLevel.id,
         completed: false,
         questionsAnswered: [currentQuestion.id],
-        xpEarned: correct ? level.xpReward : 0,
+        xpEarned: correct ? currentLevel.xpReward : 0,
       });
     }
-    updateUser({ ...user, progress: newProgress });
 
+    updateUser({ ...user, progress: newProgress });
     setShowFeedback(true);
   };
 
@@ -86,10 +92,11 @@ export default function QuizScreen() {
     setSelectedAnswer(null);
     setShowFeedback(false);
 
-    if (currentQuestionIndex + 1 < questions.length) {
+    const isLastQuestion = currentQuestionIndex + 1 >= questions.length;
+    if (!isLastQuestion) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      navigate("/progress-map");
+      navigate("/results");
     }
   };
 
@@ -102,21 +109,21 @@ export default function QuizScreen() {
 
   const getButtonClasses = (option: string) => {
     if (!showFeedback) return "bg-gray-200 hover:bg-gray-300";
-    if (
+
+    const correctOption =
       (isMCQ(currentQuestion) &&
-        option ===
-          currentQuestion.options[currentQuestion.correctOptionIndex]) ||
+        currentQuestion.options[currentQuestion.correctOptionIndex]) ||
       (isTrueFalse(currentQuestion) &&
-        (option === "true" ? true : false) === currentQuestion.answer)
-    )
-      return "bg-green-400 text-white";
+        (currentQuestion.answer ? "true" : "false"));
+
+    if (option === correctOption) return "bg-green-400 text-white";
     if (option === selectedAnswer) return "bg-red-400 text-white";
     return "bg-gray-200";
   };
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-green-100 to-blue-200">
-      <h2 className="text-xl font-bold mb-4">{level.title}</h2>
+      <h2 className="text-xl font-bold mb-4">{currentLevel.title}</h2>
 
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl">
         <p className="text-lg mb-4">
@@ -125,7 +132,7 @@ export default function QuizScreen() {
             : currentQuestion.question}
         </p>
 
-        {/* --- Multiple Choice / TrueFalse buttons --- */}
+        {/* MCQ / TrueFalse */}
         {answerOptions.length > 0 && (
           <div className="flex flex-col space-y-3">
             {answerOptions.map((opt) => (
@@ -144,7 +151,7 @@ export default function QuizScreen() {
           </div>
         )}
 
-        {/* --- Short Answer input --- */}
+        {/* Short Answer */}
         {isShortAnswer(currentQuestion) && !showFeedback && (
           <div className="flex flex-col space-y-2">
             <input
@@ -163,7 +170,7 @@ export default function QuizScreen() {
           </div>
         )}
 
-        {/* --- Feedback & Explanation --- */}
+        {/* Feedback */}
         {showFeedback && (
           <div className="mt-4 p-2 bg-gray-100 rounded">
             <p className="font-bold">

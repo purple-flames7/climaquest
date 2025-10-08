@@ -1,10 +1,11 @@
 // src/App.tsx
-import { Routes, Route } from "react-router"; //
+import { Routes, Route } from "react-router";
 import SplashScreen from "./screens/SplashScreen";
 import HomeScreen from "./screens/HomeScreen";
 import TutorialScreen from "./screens/TutorialScreen";
 import ProgressMap from "./screens/ProgressMap";
 import QuizScreen from "./screens/QuizScreen";
+import ResultsScreen from "./screens/ResultsScreen";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Route path="/tutorial" element={<TutorialScreen />} />
       <Route path="/progress-map" element={<ProgressMap />} />
       <Route path="/quiz" element={<QuizScreen />} />
+      <Route path="/results" element={<ResultsScreen />} />
     </Routes>
   );
 }

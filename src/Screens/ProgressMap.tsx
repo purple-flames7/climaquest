@@ -1,64 +1,52 @@
+// src/screens/ProgressMap.tsx
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useGame } from "../context/useGame";
-import { levels, pickQuestionsForUser } from "../data/levels";
+import { pickQuestionsForUser } from "../data/levels";
 import { allQuestionsById } from "../data/allQuestions";
-import type { Level } from "../types/level";
 
 export default function ProgressMap() {
-  const { selectLevel, currentLevelIndex, user, updateUser } = useGame();
+  const { levels, currentLevelIndex, user, updateUser, selectLevel } =
+    useGame();
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   // Auto-scroll to current level
   useEffect(() => {
     if (containerRef.current) {
-      const targetIndex = currentLevelIndex ?? 0;
       const target = containerRef.current.querySelector(
-        `[data-level="${targetIndex}"]`
+        `[data-level="${currentLevelIndex}"]`
       ) as HTMLElement;
 
-      if (target) {
+      if (target)
         target.scrollIntoView({ behavior: "smooth", block: "center" });
-      } else {
-        containerRef.current.scrollTop = containerRef.current.scrollHeight;
-      }
+      else containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [currentLevelIndex]);
 
   const reversedLevels = [...levels].reverse();
 
-  const handleLevelClick = (originalIndex: number, level: Level) => {
+  const handleLevelClick = (levelIndex: number) => {
+    const level = levels[levelIndex];
     if (!level.unlocked) return;
 
-    // Update current level in context
-    selectLevel(originalIndex);
-
+    selectLevel(levelIndex);
     updateUser({ ...user, currentLevelId: level.id });
 
-    // Build answered questions map for this user
+    // Map answered questions
     const answeredQuestions: Record<string, boolean> = {};
     user.progress.forEach((p) =>
-      p.questionsAnswered.forEach((qId) => {
-        answeredQuestions[qId] = true;
-      })
+      p.questionsAnswered.forEach((qId) => (answeredQuestions[qId] = true))
     );
 
     // Pick questions dynamically
-    const questionIDs = pickQuestionsForUser(level, answeredQuestions, false);
-    const questions = questionIDs
+    level.questionIDs = pickQuestionsForUser(level, answeredQuestions, false);
+    const questions = level.questionIDs
       .map((id) => allQuestionsById[id])
       .filter(Boolean);
 
-    // Navigate to QuizScreen with all necessary data
-    navigate("/quiz", {
-      state: {
-        level,
-        questions,
-        user,
-      },
-    });
+    navigate("/quiz", { state: { level, questions, user } });
   };
 
   return (
@@ -71,15 +59,22 @@ export default function ProgressMap() {
           const originalIndex = levels.length - 1 - idx;
           const isUnlocked = level.unlocked;
           const isCurrent = originalIndex === currentLevelIndex;
+          const isCompleted = level.completed;
 
           return (
             <motion.button
               key={level.id}
               data-level={originalIndex}
-              onClick={() => handleLevelClick(originalIndex, level)}
+              onClick={() => handleLevelClick(originalIndex)}
               disabled={!isUnlocked}
               className={`relative w-20 h-20 rounded-full flex items-center justify-center
-                ${isUnlocked ? "bg-green-500" : "bg-gray-400"}
+                ${
+                  isCompleted
+                    ? "bg-green-700"
+                    : isUnlocked
+                    ? "bg-green-500"
+                    : "bg-gray-400"
+                }
                 ${isCurrent ? "ring-4 ring-yellow-300" : ""}
                 shadow-lg cursor-pointer`}
               whileHover={isUnlocked ? { scale: 1.1 } : {}}
