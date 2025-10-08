@@ -1,8 +1,9 @@
-// src/context/gameContext.ts
+// src/context/gameContext.tsx
 
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Level } from "../types/level";
+import type { User } from "../types/user";
 import { levels as initialLevels } from "../data/levels";
 import { allQuestionsById } from "../data/allQuestions";
 import { GameContext } from "./gameContextCore";
@@ -18,6 +19,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const stored = localStorage.getItem("tutorialCompleted");
     return stored ? JSON.parse(stored) : false;
   });
+
+  const [user, setUser] = useState<User>({
+    id: "1",
+    name: "Player",
+    avatar: undefined,
+    currentLevelId: 1,
+    totalXp: 0,
+    progress: [],
+    achievements: [],
+    streak: 0,
+  });
+
+  const updateUser = (updatedUser: User) => setUser(updatedUser);
 
   const completeTutorial = () => {
     setTutorialCompleted(true);
@@ -35,19 +49,23 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const answerQuestion = (questionId: string, correct: boolean) => {
+    // Mark question as completed
     if (!completedQuestions.includes(questionId)) {
       setCompletedQuestions((prev) => [...prev, questionId]);
       if (correct) setXp((prev) => prev + (currentLevel.xpReward ?? 10));
     }
 
+    // Move to next question
     const nextQuestionIndex = currentQuestionIndex + 1;
     setCurrentQuestionIndex(nextQuestionIndex);
 
+    // Check if all questions in level are answered
     const allAnswered = currentLevel.questionIDs.every(
       (qId) => completedQuestions.includes(qId) || qId === questionId
     );
 
     if (allAnswered) {
+      // Update levels: mark current as completed, unlock next
       const nextLevelIndex = currentLevelIndex + 1;
       setLevels((prev) =>
         prev.map((lvl, idx) => {
@@ -65,6 +83,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setCurrentQuestionIndex(0);
     setCompletedQuestions([]);
     setXp(0);
+    setUser({
+      id: "1",
+      name: "Player",
+      avatar: undefined,
+      currentLevelId: 1,
+      totalXp: 0,
+      progress: [],
+      achievements: [],
+      streak: 0,
+    });
     localStorage.removeItem("tutorialCompleted");
     setTutorialCompleted(false);
   };
@@ -83,6 +111,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         resetGame,
         tutorialCompleted,
         completeTutorial,
+        user,
+        updateUser,
       }}
     >
       {children}

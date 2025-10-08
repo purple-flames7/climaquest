@@ -1,13 +1,17 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 import { useGame } from "../context/useGame";
-import { levels } from "../data/levels";
+import { levels, pickQuestionsForUser } from "../data/levels";
+import { allQuestionsById } from "../data/allQuestions";
+import type { Level } from "../types/level";
 
 export default function ProgressMap() {
-  const { selectLevel, currentLevelIndex } = useGame();
+  const { selectLevel, currentLevelIndex, user, updateUser } = useGame();
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  // Auto-scroll to current level or bottom
+  // Auto-scroll to current level
   useEffect(() => {
     if (containerRef.current) {
       const targetIndex = currentLevelIndex ?? 0;
@@ -18,14 +22,44 @@ export default function ProgressMap() {
       if (target) {
         target.scrollIntoView({ behavior: "smooth", block: "center" });
       } else {
-        // Scroll to bottom (level 1)
         containerRef.current.scrollTop = containerRef.current.scrollHeight;
       }
     }
   }, [currentLevelIndex]);
 
-  // Reverse levels so level 1 is at bottom
   const reversedLevels = [...levels].reverse();
+
+  const handleLevelClick = (originalIndex: number, level: Level) => {
+    if (!level.unlocked) return;
+
+    // Update current level in context
+    selectLevel(originalIndex);
+
+    updateUser({ ...user, currentLevelId: level.id });
+
+    // Build answered questions map for this user
+    const answeredQuestions: Record<string, boolean> = {};
+    user.progress.forEach((p) =>
+      p.questionsAnswered.forEach((qId) => {
+        answeredQuestions[qId] = true;
+      })
+    );
+
+    // Pick questions dynamically
+    const questionIDs = pickQuestionsForUser(level, answeredQuestions, false);
+    const questions = questionIDs
+      .map((id) => allQuestionsById[id])
+      .filter(Boolean);
+
+    // Navigate to QuizScreen with all necessary data
+    navigate("/quiz", {
+      state: {
+        level,
+        questions,
+        user,
+      },
+    });
+  };
 
   return (
     <div
@@ -42,7 +76,7 @@ export default function ProgressMap() {
             <motion.button
               key={level.id}
               data-level={originalIndex}
-              onClick={() => isUnlocked && selectLevel(originalIndex)}
+              onClick={() => handleLevelClick(originalIndex, level)}
               disabled={!isUnlocked}
               className={`relative w-20 h-20 rounded-full flex items-center justify-center
                 ${isUnlocked ? "bg-green-500" : "bg-gray-400"}

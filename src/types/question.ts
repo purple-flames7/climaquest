@@ -42,35 +42,35 @@ export type ShortAnswerQuestion = {
   difficulty: Difficulty;
 };
 
-export type DragDropQuestion = {
-  id: string;
-  type: "dragdrop";
-  prompt: string;
-  items: string[];
-  targets: string[];
-  correctMatches: Record<string, string>;
-  explanation: string;
-  category: Category;
-  difficulty: Difficulty;
-};
+// export type DragDropQuestion = {
+//   id: string;
+//   type: "dragdrop";
+//   prompt: string;
+//   items: string[];
+//   targets: string[];
+//   correctMatches: Record<string, string>;
+//   explanation: string;
+//   category: Category;
+//   difficulty: Difficulty;
+// };
 
-export type ScenarioQuestion = {
-  id: string;
-  type: "scenario";
-  scenario: string;
-  options?: string[];
-  correctOptionIndex?: number;
-  acceptableAnswers?: string[];
-  explanation: string;
-  category: Category;
-  difficulty: Difficulty;
-};
+// export type ScenarioQuestion = {
+//   id: string;
+//   type: "scenario";
+//   scenario: string;
+//   options?: string[];
+//   correctOptionIndex?: number;
+//   acceptableAnswers?: string[];
+//   explanation: string;
+//   category: Category;
+//   difficulty: Difficulty;
+// };
 
 // Union Type
 
 export type Question =
   | MultipleChoiceQuestion
   | TrueFalseQuestion
-  | ShortAnswerQuestion
-  | DragDropQuestion
-  | ScenarioQuestion;
+  | ShortAnswerQuestion;
+// | DragDropQuestion
+// | ScenarioQuestion;
