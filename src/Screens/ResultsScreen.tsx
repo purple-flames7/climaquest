@@ -1,103 +1,135 @@
 // src/screens/ResultsScreen.tsx
-import { useNavigate, useLocation } from "react-router";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 import { useGame } from "../context/useGame";
-import { pickQuestionsForUser } from "../data/levels";
-import type { Level } from "../types/level";
 
 export default function ResultsScreen() {
-  const { width, height } = useWindowSize();
-  const { levels, currentLevelIndex, user, updateUser, selectLevel } =
-    useGame();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { width, height } = useWindowSize();
+  const { user, levels, currentLevelIndex, updateUser } = useGame();
 
-  // Get level from state or fallback to context
-  let level = location.state?.level as Level | undefined;
-  if (!level) level = levels[currentLevelIndex];
-  if (!level) return <div>No level data available</div>;
+  const level = levels[currentLevelIndex];
+  const progress = user.progress.find((p) => p.levelId === level.id);
 
-  // XP earned in this level
-  const xpEarned =
-    user.progress.find((p) => p.levelId === level!.id)?.xpEarned ?? 0;
+  const xpEarned = progress?.xpEarned || 0;
+  const totalQuestions = level.questionIDs.length;
+  const questionsAnswered = progress?.questionsAnswered.length || 0;
+  const correctRatio = Math.round((questionsAnswered / totalQuestions) * 100);
 
-  // --- Next Level ---
+  // ✅ Mark current level completed if all questions were answered
+  if (progress && !progress.completed && questionsAnswered === totalQuestions) {
+    const updatedProgress = user.progress.map((p) =>
+      p.levelId === level.id ? { ...p, completed: true } : p
+    );
+    updateUser({ ...user, progress: updatedProgress });
+  }
+
+  const handlePlayAgain = () => navigate("/quiz");
+
   const handleNextLevel = () => {
     const nextLevelIndex = currentLevelIndex + 1;
-    const nextLevel = levels[nextLevelIndex];
-    if (!nextLevel || !nextLevel.unlocked) return;
+    if (nextLevelIndex < levels.length) {
+      // ✅ Unlock the next level if not already
+      const nextLevel = levels[nextLevelIndex];
+      const hasNextProgress = user.progress.some(
+        (p) => p.levelId === nextLevel.id
+      );
 
-    // Map user answered questions
-    const answeredQuestions: Record<string, boolean> = {};
-    user.progress.forEach((p) =>
-      p.questionsAnswered.forEach((qId) => (answeredQuestions[qId] = true))
-    );
+      if (!hasNextProgress) {
+        const updatedProgress = [
+          ...user.progress,
+          {
+            levelId: nextLevel.id,
+            completed: false,
+            questionsAnswered: [],
+            xpEarned: 0,
+            questionIDs: nextLevel.questionIDs,
+          },
+        ];
+        updateUser({ ...user, progress: updatedProgress });
+      }
 
-    // Pick questions dynamically
-    nextLevel.questionIDs = pickQuestionsForUser(
-      nextLevel,
-      answeredQuestions,
-      false
-    );
-
-    // Update context
-    selectLevel(nextLevelIndex);
-    updateUser({ ...user, currentLevelId: nextLevel.id });
-
-    navigate("/quiz", { state: { level: nextLevel } });
+      navigate("/quiz");
+    } else {
+      // ✅ If this was the last level, return to home
+      navigate("/home");
+    }
   };
 
-  // --- Retry Level ---
-  const handleRetryLevel = () => {
-    const answeredQuestions: Record<string, boolean> = {};
-    user.progress.forEach((p) =>
-      p.questionsAnswered.forEach((qId) => (answeredQuestions[qId] = true))
-    );
-
-    level!.questionIDs = pickQuestionsForUser(level!, answeredQuestions, true);
-    navigate("/quiz", { state: { level } });
-  };
-
-  // --- Back Home ---
-  const handleBackHome = () => navigate("/home");
+  const isLastLevel = currentLevelIndex + 1 >= levels.length;
 
   return (
-    <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-green-100 to-blue-200">
-      {/* Confetti celebration */}
-      {xpEarned > 0 && (
-        <Confetti width={width} height={height} recycle={false} />
-      )}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6 relative">
+      <Confetti
+        width={width}
+        height={height}
+        recycle={false}
+        numberOfPieces={200}
+      />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md flex flex-col items-center space-y-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-10 w-full max-w-lg text-center flex flex-col items-center space-y-6"
       >
-        <h2 className="text-2xl font-bold">{level.title} Complete!</h2>
-        <p className="text-lg">You earned {xpEarned} XP</p>
+        <h2 className="text-3xl font-bold text-emerald-700">
+          {isLastLevel ? "All Levels Complete!" : "Level Complete!"}
+        </h2>
 
-        <div className="flex flex-col space-y-3 w-full">
-          <button
-            onClick={handleNextLevel}
-            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
-          >
-            Next Level
-          </button>
-          <button
-            onClick={handleRetryLevel}
-            className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded"
-          >
-            Retry Level
-          </button>
-          <button
-            onClick={handleBackHome}
-            className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded"
-          >
-            Back Home
-          </button>
+        <p className="text-gray-700 font-medium text-lg">{level.title}</p>
+
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
+          className="bg-gradient-to-r from-emerald-400 to-teal-400 text-white rounded-2xl py-6 px-10 shadow-lg"
+        >
+          <p className="text-4xl font-bold">{xpEarned} XP</p>
+          <p className="text-sm opacity-90">Earned this round</p>
+        </motion.div>
+
+        <div className="w-full space-y-2 text-gray-700 font-medium">
+          <p>
+            Questions Answered:{" "}
+            <span className="font-semibold text-emerald-600">
+              {questionsAnswered}/{totalQuestions}
+            </span>
+          </p>
+          <p>
+            Accuracy:{" "}
+            <span className="font-semibold text-emerald-600">
+              {correctRatio}%
+            </span>
+          </p>
         </div>
+
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4 mt-4 w-full justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <motion.button
+            onClick={handlePlayAgain}
+            className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 to-teal-400 text-white font-semibold py-3 px-6 rounded-xl shadow hover:opacity-90"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Play Again
+          </motion.button>
+
+          <motion.button
+            onClick={handleNextLevel}
+            className="w-full sm:w-auto bg-white text-emerald-700 border border-emerald-200 font-semibold py-3 px-6 rounded-xl shadow hover:bg-emerald-50"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            {isLastLevel ? "Back Home" : "Next Level"}
+          </motion.button>
+        </motion.div>
       </motion.div>
     </div>
   );

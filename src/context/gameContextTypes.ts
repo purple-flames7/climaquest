@@ -16,6 +16,7 @@ export interface GameContextProps {
   selectLevel: (index: number) => void;
   answerQuestion: (questionId: string, correct: boolean) => void;
   resetGame: () => void;
+  retryLevel: (index: number) => void;
   tutorialCompleted: boolean;
   completeTutorial: () => void;
 }

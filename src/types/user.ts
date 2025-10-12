@@ -5,6 +5,7 @@ export interface UserProgress {
   completed: boolean; // Did the user finish this level?
   questionsAnswered: string[]; // IDs of questions answered in this level
   xpEarned: number; // XP earned in this level
+  questionIDs: string[]; // IDs of questions presented in this level
 }
 
 export interface Achievement {

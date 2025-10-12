@@ -14,7 +14,7 @@ export default function SplashScreen() {
     return () => clearTimeout(timer);
   }, [navigate]);
 
-  const text = "ClimaQuest";
+  const text = "CLIMAQUEST";
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-emerald-100 to-teal-200">
@@ -29,7 +29,7 @@ export default function SplashScreen() {
       />
 
       {/* Letter-by-letter text animation */}
-      <div className="flex space-x-1 text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+      <div className="flex space-x-1 text-[22px] md:text-[24px] tracking-[0.08em] font-raleway font-black text-[#008038] leading-snug">
         {text.split("").map((char, index) => (
           <motion.span
             key={index}

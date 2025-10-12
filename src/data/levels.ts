@@ -1,7 +1,6 @@
 // src/data/levels.ts
 
-import type { Level } from "../types/level";
-import type { Category } from "../types/question";
+import type { Level, Category } from "../types";
 import { allQuestionsById } from "./allQuestions";
 
 // The categories for levels
@@ -73,26 +72,32 @@ export const levels: Level[] = Array.from({ length: 30 }, (_, i) => {
 export function pickQuestionsForUser(
   level: Level,
   answeredQuestions: Record<string, boolean>,
-  allowRepeats = false
+  allowRepeats = false,
+  numQuestions = 5
 ): string[] {
-  return level.categories.map((category) => {
-    // Filter all questions by category and difficulty
-    let pool = Object.values(allQuestionsById).filter(
-      (q) => q.category === category && q.difficulty === level.difficulty
+  // Step 1: Collect the full pool
+  let pool = Object.values(allQuestionsById).filter(
+    (q) =>
+      level.categories.includes(q.category) && q.difficulty === level.difficulty
+  );
+
+  // Step 2: Filter out already answered ones (if not allowed)
+  if (!allowRepeats) {
+    pool = pool.filter((q) => !answeredQuestions[q.id]);
+  }
+
+  // Step 3: If not enough questions, fallback to all in that difficulty
+  if (pool.length < numQuestions) {
+    pool = Object.values(allQuestionsById).filter(
+      (q) =>
+        level.categories.includes(q.category) &&
+        q.difficulty === level.difficulty
     );
+  }
 
-    if (!allowRepeats) {
-      pool = pool.filter((q) => !answeredQuestions[q.id]);
-    }
+  // Step 4: Shuffle and take first N
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, numQuestions);
 
-    if (pool.length === 0) {
-      // fallback: if all questions used, allow repeats
-      pool = Object.values(allQuestionsById).filter(
-        (q) => q.category === category && q.difficulty === level.difficulty
-      );
-    }
-
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    return pool[randomIndex]?.id || ""; // return empty string if pool somehow empty
-  });
+  return selected.map((q) => q.id);
 }

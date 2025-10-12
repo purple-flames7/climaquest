@@ -1,10 +1,7 @@
-// src/context/gameContext.tsx
-
 import { useState } from "react";
 import type { ReactNode } from "react";
-import type { Level } from "../types/level";
-import type { User } from "../types/user";
-import { levels as initialLevels } from "../data/levels";
+import type { Level, User } from "../types";
+import { levels as initialLevels, pickQuestionsForUser } from "../data/levels";
 import { allQuestionsById } from "../data/allQuestions";
 import { GameContext } from "./gameContextCore";
 
@@ -42,30 +39,63 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const currentQuestionId = currentLevel.questionIDs[currentQuestionIndex];
   const currentQuestion = allQuestionsById[currentQuestionId];
 
+  // 🟢 Select Level — generate and store questions once
   const selectLevel = (index: number) => {
     setCurrentLevelIndex(index);
     setCurrentQuestionIndex(0);
     setCompletedQuestions([]);
+
+    setLevels((prevLevels) => {
+      const updatedLevels = [...prevLevels];
+      const level = updatedLevels[index];
+
+      // ✅ Only generate questions if not already set
+      if (level.questionIDs.length === 0) {
+        const questionIDs = pickQuestionsForUser(level, {}, false, 5);
+        level.questionIDs = questionIDs;
+      }
+
+      // ✅ Store chosen questions in user progress if not already tracked
+      setUser((prev) => {
+        const alreadyTracked = prev.progress.find(
+          (p) => p.levelId === level.id
+        );
+        if (alreadyTracked) return prev;
+
+        return {
+          ...prev,
+          progress: [
+            ...prev.progress,
+            {
+              levelId: level.id,
+              xpEarned: 0,
+              completed: false,
+              questionsAnswered: [],
+              questionIDs: [...level.questionIDs], // 🔒 Save for reuse
+            },
+          ],
+        };
+      });
+
+      return updatedLevels;
+    });
   };
 
+  // 🟢 Answer Question — XP + progress handling
   const answerQuestion = (questionId: string, correct: boolean) => {
-    // Mark question as completed
     if (!completedQuestions.includes(questionId)) {
       setCompletedQuestions((prev) => [...prev, questionId]);
       if (correct) setXp((prev) => prev + (currentLevel.xpReward ?? 10));
     }
 
-    // Move to next question
     const nextQuestionIndex = currentQuestionIndex + 1;
     setCurrentQuestionIndex(nextQuestionIndex);
 
-    // Check if all questions in level are answered
     const allAnswered = currentLevel.questionIDs.every(
       (qId) => completedQuestions.includes(qId) || qId === questionId
     );
 
     if (allAnswered) {
-      // Update levels: mark current as completed, unlock next
       const nextLevelIndex = currentLevelIndex + 1;
       setLevels((prev) =>
         prev.map((lvl, idx) => {
@@ -77,6 +107,27 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // 🟢 Retry Level — reuse same questions from stored progress
+  const retryLevel = (index: number) => {
+    setCurrentLevelIndex(index);
+    setCurrentQuestionIndex(0);
+    setCompletedQuestions([]);
+
+    setLevels((prevLevels) => {
+      const updated = [...prevLevels];
+      const level = updated[index];
+
+      const savedProgress = user.progress.find((p) => p.levelId === level.id);
+      if (savedProgress?.questionIDs?.length) {
+        level.questionIDs = [...savedProgress.questionIDs];
+      }
+
+      updated[index] = { ...level, completed: false };
+      return updated;
+    });
+  };
+
+  // 🟢 Full Reset
   const resetGame = () => {
     setLevels(initialLevels);
     setCurrentLevelIndex(0);
@@ -108,6 +159,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         completedQuestions,
         selectLevel,
         answerQuestion,
+        retryLevel,
         resetGame,
         tutorialCompleted,
         completeTutorial,

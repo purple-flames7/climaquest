@@ -1,7 +1,9 @@
 // src/screens/QuizScreen.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import Confetti from "react-confetti";
+import { useWindowSize } from "react-use";
 import { useGame } from "../context/useGame";
 import type {
   Question,
@@ -14,6 +16,7 @@ import { allQuestionsById } from "../data/allQuestions";
 
 export default function QuizScreen() {
   const navigate = useNavigate();
+  const { width, height } = useWindowSize();
   const { currentLevelIndex, levels, answerQuestion, user, updateUser } =
     useGame();
 
@@ -21,8 +24,8 @@ export default function QuizScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
-  // --- Defensive loading checks ---
   const currentLevel = levels[currentLevelIndex];
   if (!currentLevel) return <div>Loading level...</div>;
 
@@ -35,12 +38,10 @@ export default function QuizScreen() {
   const currentQuestion = questions[currentQuestionIndex];
   if (!currentQuestion) return <div>Loading question...</div>;
 
-  // --- Handle answer submission ---
   const handleSubmitAnswer = (answer?: string) => {
     if (showFeedback) return;
 
     let correct = false;
-
     if (isMCQ(currentQuestion) && answer) {
       const mcq = currentQuestion as MultipleChoiceQuestion;
       correct = mcq.options[mcq.correctOptionIndex] === answer;
@@ -57,10 +58,8 @@ export default function QuizScreen() {
       setSelectedAnswer(typedAnswer);
     }
 
-    // Update GameContext
     answerQuestion(currentQuestion.id, correct);
 
-    // Update user progress
     const progressIndex = user.progress.findIndex(
       (p) => p.levelId === currentLevel.id
     );
@@ -79,14 +78,20 @@ export default function QuizScreen() {
         completed: false,
         questionsAnswered: [currentQuestion.id],
         xpEarned: correct ? currentLevel.xpReward : 0,
+        questionIDs: currentLevel.questionIDs, // ✅ FIXED
       });
     }
 
     updateUser({ ...user, progress: newProgress });
+
+    if (correct) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 1800);
+    }
+
     setShowFeedback(true);
   };
 
-  // --- Handle Next button ---
   const handleNext = () => {
     setTypedAnswer("");
     setSelectedAnswer(null);
@@ -100,7 +105,9 @@ export default function QuizScreen() {
     }
   };
 
-  // --- Render answer options ---
+  const totalQuestions = questions.length;
+  const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
   const answerOptions: string[] = isMCQ(currentQuestion)
     ? currentQuestion.options
     : isTrueFalse(currentQuestion)
@@ -108,7 +115,8 @@ export default function QuizScreen() {
     : [];
 
   const getButtonClasses = (option: string) => {
-    if (!showFeedback) return "bg-gray-200 hover:bg-gray-300";
+    if (!showFeedback)
+      return "bg-white/70 hover:bg-white text-gray-800 border border-emerald-200";
 
     const correctOption =
       (isMCQ(currentQuestion) &&
@@ -116,82 +124,135 @@ export default function QuizScreen() {
       (isTrueFalse(currentQuestion) &&
         (currentQuestion.answer ? "true" : "false"));
 
-    if (option === correctOption) return "bg-green-400 text-white";
-    if (option === selectedAnswer) return "bg-red-400 text-white";
-    return "bg-gray-200";
+    if (option === correctOption)
+      return "bg-emerald-400 text-white border border-emerald-500";
+    if (option === selectedAnswer)
+      return "bg-red-400 text-white border border-red-500";
+    return "bg-white/70 text-gray-700 border border-gray-200";
   };
 
   return (
-    <div className="h-screen w-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-green-100 to-blue-200">
-      <h2 className="text-xl font-bold mb-4">{currentLevel.title}</h2>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6">
+      {showConfetti && (
+        <Confetti
+          width={width}
+          height={height}
+          recycle={false}
+          numberOfPieces={150}
+        />
+      )}
 
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl">
-        <p className="text-lg mb-4">
-          {isTrueFalse(currentQuestion)
-            ? currentQuestion.statement
-            : currentQuestion.question}
-        </p>
-
-        {/* MCQ / TrueFalse */}
-        {answerOptions.length > 0 && (
-          <div className="flex flex-col space-y-3">
-            {answerOptions.map((opt) => (
-              <motion.button
-                key={opt}
-                onClick={() => handleSubmitAnswer(opt)}
-                className={`p-3 rounded-md transition-colors ${getButtonClasses(
-                  opt
-                )}`}
-                whileHover={{ scale: selectedAnswer === opt ? 1 : 1.05 }}
-                whileTap={{ scale: selectedAnswer === opt ? 1 : 0.95 }}
-              >
-                {opt}
-              </motion.button>
-            ))}
-          </div>
-        )}
-
-        {/* Short Answer */}
-        {isShortAnswer(currentQuestion) && !showFeedback && (
-          <div className="flex flex-col space-y-2">
-            <input
-              type="text"
-              value={typedAnswer}
-              onChange={(e) => setTypedAnswer(e.target.value)}
-              placeholder="Type your answer..."
-              className="border p-2 rounded w-full"
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-xl relative flex flex-col space-y-6"
+      >
+        {/* Title and Progress */}
+        <div>
+          <h2 className="text-2xl font-bold text-emerald-700 text-center mb-3">
+            {currentLevel.title}
+          </h2>
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-emerald-400 to-teal-400"
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.5 }}
             />
-            <button
-              onClick={() => handleSubmitAnswer()}
-              className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-            >
-              Submit
-            </button>
           </div>
-        )}
+        </div>
 
-        {/* Feedback */}
-        {showFeedback && (
-          <div className="mt-4 p-2 bg-gray-100 rounded">
-            <p className="font-bold">
-              {selectedAnswer === typedAnswer ? "Your answer" : selectedAnswer}
+        {/* Question */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentQuestion.id}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.45, ease: "easeInOut" }}
+          >
+            <p className="text-lg text-gray-800 font-medium mb-6 text-center">
+              {isTrueFalse(currentQuestion)
+                ? currentQuestion.statement
+                : currentQuestion.question}
             </p>
-            <p>{currentQuestion.explanation}</p>
-            <button
-              onClick={handleNext}
-              className="mt-2 bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded"
-            >
-              Next
-            </button>
-          </div>
-        )}
-      </div>
 
-      <div className="mt-6 w-full max-w-xl">
-        <p>
-          Question {currentQuestionIndex + 1} / {questions.length}
-        </p>
-      </div>
+            {/* Options */}
+            {answerOptions.length > 0 && (
+              <div className="flex flex-col space-y-3">
+                {answerOptions.map((opt) => (
+                  <motion.button
+                    key={opt}
+                    onClick={() => handleSubmitAnswer(opt)}
+                    className={`py-3 px-4 rounded-xl transition-colors font-semibold ${getButtonClasses(
+                      opt
+                    )}`}
+                    whileHover={{ scale: selectedAnswer === opt ? 1 : 1.05 }}
+                    whileTap={{ scale: selectedAnswer === opt ? 1 : 0.97 }}
+                  >
+                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                  </motion.button>
+                ))}
+              </div>
+            )}
+
+            {/* Short Answer */}
+            {isShortAnswer(currentQuestion) && !showFeedback && (
+              <div className="flex flex-col space-y-3">
+                <input
+                  type="text"
+                  value={typedAnswer}
+                  onChange={(e) => setTypedAnswer(e.target.value)}
+                  placeholder="Type your answer..."
+                  className="border border-emerald-200 focus:ring-2 focus:ring-emerald-400 rounded-lg p-3 text-gray-700"
+                />
+                <motion.button
+                  onClick={() => handleSubmitAnswer()}
+                  className="bg-emerald-500 text-white py-2 px-6 rounded-lg hover:bg-emerald-600 font-semibold"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Submit
+                </motion.button>
+              </div>
+            )}
+
+            {/* Feedback */}
+            <AnimatePresence>
+              {showFeedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-6 bg-white/60 border border-emerald-200 p-4 rounded-xl text-center"
+                >
+                  <p className="font-semibold text-gray-800 mb-2">
+                    {selectedAnswer
+                      ? `You chose: ${selectedAnswer}`
+                      : "Answer submitted"}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    {currentQuestion.explanation}
+                  </p>
+
+                  <motion.button
+                    onClick={handleNext}
+                    className="mt-4 bg-gradient-to-r from-emerald-400 to-teal-400 text-white font-bold py-2 px-6 rounded-lg shadow hover:opacity-90"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Next
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="text-center text-gray-700 font-medium">
+          Question {currentQuestionIndex + 1} / {totalQuestions}
+        </div>
+      </motion.div>
     </div>
   );
 }
