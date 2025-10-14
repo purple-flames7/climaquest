@@ -27,7 +27,7 @@ export default function HomeScreen() {
 
       {/* Tagline */}
       <motion.p
-        className="text-white/90 text-lg mb-8 max-w-md"
+        className="text-emerald-900 text-lg mb-8 max-w-md drop-shadow-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.8 }}

@@ -169,7 +169,7 @@ export default function TutorialScreen() {
             className="absolute top-1/4 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-lg w-80"
           >
             <h2 className="text-2xl font-bold text-emerald-800 mb-3">
-              You’re Ready! 🎉
+              You’re Ready!
             </h2>
             <p className="text-emerald-700 mb-4">
               Now you know how to answer questions. Time to begin your Climate

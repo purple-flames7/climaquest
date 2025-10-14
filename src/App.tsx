@@ -6,6 +6,7 @@ import TutorialScreen from "./screens/TutorialScreen";
 import ProgressMap from "./screens/ProgressMap";
 import QuizScreen from "./screens/QuizScreen";
 import ResultsScreen from "./screens/ResultsScreen";
+import ReviewScreen from "./screens/ReviewScreen";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Route path="/progress-map" element={<ProgressMap />} />
       <Route path="/quiz" element={<QuizScreen />} />
       <Route path="/results" element={<ResultsScreen />} />
+      <Route path="/review" element={<ReviewScreen />} />
     </Routes>
   );
 }

@@ -1,4 +1,5 @@
 // src/screens/ResultsScreen.tsx
+import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import Confetti from "react-confetti";
@@ -8,52 +9,102 @@ import { useGame } from "../context/useGame";
 export default function ResultsScreen() {
   const navigate = useNavigate();
   const { width, height } = useWindowSize();
-  const { user, levels, currentLevelIndex, updateUser } = useGame();
+
+  // Grab the functions we need from context
+  const {
+    user,
+    levels,
+    currentLevelIndex,
+    updateUser,
+    answeredQuestions,
+    retryLevel,
+    selectLevel,
+  } = useGame();
 
   const level = levels[currentLevelIndex];
-  const progress = user.progress.find((p) => p.levelId === level.id);
 
-  const xpEarned = progress?.xpEarned || 0;
+  // filter answeredQuestions down to this level's questions only
+  const levelQuestionIds = new Set(level.questionIDs);
+  const thisLevelAnswers = answeredQuestions.filter((a) =>
+    levelQuestionIds.has(a.id)
+  );
+
   const totalQuestions = level.questionIDs.length;
-  const questionsAnswered = progress?.questionsAnswered.length || 0;
-  const correctRatio = Math.round((questionsAnswered / totalQuestions) * 100);
+  const correctCount = thisLevelAnswers.filter((a) => a.correct).length;
+  const questionsAnswered = thisLevelAnswers.length;
 
-  // ✅ Mark current level completed if all questions were answered
-  if (progress && !progress.completed && questionsAnswered === totalQuestions) {
-    const updatedProgress = user.progress.map((p) =>
-      p.levelId === level.id ? { ...p, completed: true } : p
-    );
-    updateUser({ ...user, progress: updatedProgress });
-  }
+  // XP per question is stored on level.xpReward
+  const xpPerQuestion = level.xpReward ?? 10;
+  const xpEarned = correctCount * xpPerQuestion;
 
-  const handlePlayAgain = () => navigate("/quiz");
+  // percentage safe-guard
+  const correctRatio =
+    totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
+  // Update user progress entry for this level once (idempotent)
+  // This keeps user.progress in sync with answeredQuestions
+  React.useEffect(() => {
+    const progressEntry = user.progress.find((p) => p.levelId === level.id);
+    if (!progressEntry) {
+      // create initial entry if missing
+      const newProgress = [
+        ...user.progress,
+        {
+          levelId: level.id,
+          completed: questionsAnswered >= totalQuestions,
+          questionsAnswered: thisLevelAnswers.map((a) => a.id),
+          xpEarned,
+          questionIDs: level.questionIDs,
+        },
+      ];
+      updateUser({ ...user, progress: newProgress });
+      return;
+    }
+
+    // update existing entry only if data changed to avoid infinite re-renders
+    const sameCount =
+      progressEntry.questionsAnswered?.length === thisLevelAnswers.length;
+    const sameXp = progressEntry.xpEarned === xpEarned;
+    const shouldComplete = questionsAnswered >= totalQuestions;
+
+    if (!sameCount || !sameXp || progressEntry.completed !== shouldComplete) {
+      const updatedProgress = user.progress.map((p) =>
+        p.levelId === level.id
+          ? {
+              ...p,
+              questionsAnswered: Array.from(
+                new Set([
+                  ...p.questionsAnswered,
+                  ...thisLevelAnswers.map((a) => a.id),
+                ])
+              ),
+              xpEarned,
+              completed: shouldComplete,
+            }
+          : p
+      );
+      updateUser({ ...user, progress: updatedProgress });
+    }
+    // We only want this effect to run when answeredQuestions for this level or user changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionsAnswered, xpEarned, level.id]);
+
+  // Play same level again (keeps the same questions if saved in progress)
+  const handlePlayAgain = () => {
+    // Use retryLevel if you want to reuse saved progress/questions
+    retryLevel(currentLevelIndex);
+    navigate("/quiz");
+  };
+
+  // Move to next level and start it immediately
   const handleNextLevel = () => {
     const nextLevelIndex = currentLevelIndex + 1;
+
     if (nextLevelIndex < levels.length) {
-      // ✅ Unlock the next level if not already
-      const nextLevel = levels[nextLevelIndex];
-      const hasNextProgress = user.progress.some(
-        (p) => p.levelId === nextLevel.id
-      );
-
-      if (!hasNextProgress) {
-        const updatedProgress = [
-          ...user.progress,
-          {
-            levelId: nextLevel.id,
-            completed: false,
-            questionsAnswered: [],
-            xpEarned: 0,
-            questionIDs: nextLevel.questionIDs,
-          },
-        ];
-        updateUser({ ...user, progress: updatedProgress });
-      }
-
+      // Use selectLevel to properly reset provider state for the next level
+      selectLevel(nextLevelIndex);
       navigate("/quiz");
     } else {
-      // ✅ If this was the last level, return to home
       navigate("/home");
     }
   };
@@ -119,6 +170,20 @@ export default function ResultsScreen() {
             whileTap={{ scale: 0.97 }}
           >
             Play Again
+          </motion.button>
+
+          <motion.button
+            onClick={() => navigate("/review")}
+            disabled={answeredQuestions.length === 0}
+            className={`w-full sm:w-auto font-semibold py-3 px-6 rounded-xl shadow transition ${
+              answeredQuestions.length === 0
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+            whileHover={answeredQuestions.length > 0 ? { scale: 1.05 } : {}}
+            whileTap={answeredQuestions.length > 0 ? { scale: 0.97 } : {}}
+          >
+            Review Answers
           </motion.button>
 
           <motion.button

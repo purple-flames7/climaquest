@@ -58,7 +58,12 @@ export default function QuizScreen() {
       setSelectedAnswer(typedAnswer);
     }
 
-    answerQuestion(currentQuestion.id, correct);
+    answerQuestion(
+      currentQuestion.id,
+      correct,
+      selectedAnswer ?? typedAnswer,
+      currentQuestion
+    );
 
     const progressIndex = user.progress.findIndex(
       (p) => p.levelId === currentLevel.id
@@ -78,7 +83,7 @@ export default function QuizScreen() {
         completed: false,
         questionsAnswered: [currentQuestion.id],
         xpEarned: correct ? currentLevel.xpReward : 0,
-        questionIDs: currentLevel.questionIDs, // ✅ FIXED
+        questionIDs: currentLevel.questionIDs, //  FIXED
       });
     }
 
