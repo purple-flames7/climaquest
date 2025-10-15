@@ -29,7 +29,6 @@ export default function ReviewScreen() {
         <h1 className="text-3xl font-bold text-emerald-700 text-center mb-6">
           Review Your Answers
         </h1>
-
         {answeredQuestions.map((q, index) => (
           <motion.div
             key={q.id}
@@ -42,7 +41,6 @@ export default function ReviewScreen() {
               {index + 1}. {q.questionText}
             </h3>
 
-            {/* Show MCQ Options if available */}
             {q.options && q.options.length > 0 && (
               <ul className="space-y-1">
                 {q.options.map((opt, i) => (
@@ -62,7 +60,6 @@ export default function ReviewScreen() {
               </ul>
             )}
 
-            {/*  Always display Your Answer + Correct Answer */}
             <div className="text-gray-700 space-y-1">
               <p>
                 <span className="font-semibold">Your Answer:</span>{" "}
@@ -99,12 +96,12 @@ export default function ReviewScreen() {
 
         <div className="flex justify-center mt-8">
           <motion.button
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/rewards")}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
-            className="bg-emerald-500 text-white py-3 px-6 rounded-xl shadow hover:bg-emerald-600 transition"
+            className="bg-green-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-green-800 transition-all"
           >
-            Back to Home
+            View Rewards
           </motion.button>
         </div>
       </div>

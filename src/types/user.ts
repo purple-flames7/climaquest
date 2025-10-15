@@ -1,4 +1,10 @@
 // src/types/user.ts
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+}
 
 export interface UserProgress {
   levelId: number; // Level the user has progressed in
@@ -13,6 +19,7 @@ export interface Achievement {
   title: string;
   description?: string;
   unlocked: boolean;
+  icon?: "Award" | "Star" | "Zap" | string;
 }
 
 export interface User {
@@ -23,5 +30,6 @@ export interface User {
   totalXp: number; // Accumulated XP
   progress: UserProgress[]; // Track progress per level
   achievements: Achievement[]; // Badges, milestones, or unlocked rewards
+  badges?: Badge[]; // Badges earned by the user
   streak?: number; // Optional daily or consecutive play streak
 }

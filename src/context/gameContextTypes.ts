@@ -4,6 +4,7 @@ import type { Level } from "../types/level";
 import type { Question } from "../types/question";
 import type { User } from "../types/user";
 import type { AnsweredQuestion } from "./GameProvider";
+import type { Badge } from "../types/user";
 export interface GameContextProps {
   levels: Level[];
   currentLevelIndex: number;
@@ -12,6 +13,8 @@ export interface GameContextProps {
   xp: number;
   completedQuestions: string[];
   answeredQuestions: AnsweredQuestion[];
+  recentXP?: number;
+  recentBadge?: Badge | null;
 
   user: User;
   updateUser: (updateUser: User) => void;

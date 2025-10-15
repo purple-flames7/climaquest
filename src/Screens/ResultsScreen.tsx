@@ -1,5 +1,5 @@
 // src/screens/ResultsScreen.tsx
-import React from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import Confetti from "react-confetti";
@@ -10,20 +10,10 @@ export default function ResultsScreen() {
   const navigate = useNavigate();
   const { width, height } = useWindowSize();
 
-  // Grab the functions we need from context
-  const {
-    user,
-    levels,
-    currentLevelIndex,
-    updateUser,
-    answeredQuestions,
-    retryLevel,
-    selectLevel,
-  } = useGame();
+  const { user, levels, currentLevelIndex, updateUser, answeredQuestions } =
+    useGame();
 
   const level = levels[currentLevelIndex];
-
-  // filter answeredQuestions down to this level's questions only
   const levelQuestionIds = new Set(level.questionIDs);
   const thisLevelAnswers = answeredQuestions.filter((a) =>
     levelQuestionIds.has(a.id)
@@ -33,83 +23,68 @@ export default function ResultsScreen() {
   const correctCount = thisLevelAnswers.filter((a) => a.correct).length;
   const questionsAnswered = thisLevelAnswers.length;
 
-  // XP per question is stored on level.xpReward
   const xpPerQuestion = level.xpReward ?? 10;
   const xpEarned = correctCount * xpPerQuestion;
 
-  // percentage safe-guard
   const correctRatio =
     totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
-  // Update user progress entry for this level once (idempotent)
-  // This keeps user.progress in sync with answeredQuestions
-  React.useEffect(() => {
+  // Update progress safely
+  useEffect(() => {
     const progressEntry = user.progress.find((p) => p.levelId === level.id);
-    if (!progressEntry) {
-      // create initial entry if missing
-      const newProgress = [
-        ...user.progress,
-        {
-          levelId: level.id,
-          completed: questionsAnswered >= totalQuestions,
-          questionsAnswered: thisLevelAnswers.map((a) => a.id),
-          xpEarned,
-          questionIDs: level.questionIDs,
-        },
-      ];
-      updateUser({ ...user, progress: newProgress });
-      return;
-    }
-
-    // update existing entry only if data changed to avoid infinite re-renders
-    const sameCount =
-      progressEntry.questionsAnswered?.length === thisLevelAnswers.length;
-    const sameXp = progressEntry.xpEarned === xpEarned;
     const shouldComplete = questionsAnswered >= totalQuestions;
 
-    if (!sameCount || !sameXp || progressEntry.completed !== shouldComplete) {
-      const updatedProgress = user.progress.map((p) =>
-        p.levelId === level.id
-          ? {
-              ...p,
-              questionsAnswered: Array.from(
-                new Set([
-                  ...p.questionsAnswered,
-                  ...thisLevelAnswers.map((a) => a.id),
-                ])
-              ),
-              xpEarned,
-              completed: shouldComplete,
-            }
-          : p
-      );
-      updateUser({ ...user, progress: updatedProgress });
+    if (!progressEntry) {
+      updateUser({
+        ...user,
+        progress: [
+          ...user.progress,
+          {
+            levelId: level.id,
+            completed: shouldComplete,
+            questionsAnswered: thisLevelAnswers.map((a) => a.id),
+            xpEarned,
+            questionIDs: level.questionIDs,
+          },
+        ],
+      });
+    } else {
+      const sameCount =
+        progressEntry.questionsAnswered?.length === thisLevelAnswers.length;
+      const sameXp = progressEntry.xpEarned === xpEarned;
+
+      if (!sameCount || !sameXp || progressEntry.completed !== shouldComplete) {
+        const updatedProgress = user.progress.map((p) =>
+          p.levelId === level.id
+            ? {
+                ...p,
+                questionsAnswered: Array.from(
+                  new Set([
+                    ...p.questionsAnswered,
+                    ...thisLevelAnswers.map((a) => a.id),
+                  ])
+                ),
+                xpEarned,
+                completed: shouldComplete,
+              }
+            : p
+        );
+        updateUser({ ...user, progress: updatedProgress });
+      }
     }
-    // We only want this effect to run when answeredQuestions for this level or user changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    //  eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionsAnswered, xpEarned, level.id]);
 
-  // Play same level again (keeps the same questions if saved in progress)
-  const handlePlayAgain = () => {
-    // Use retryLevel if you want to reuse saved progress/questions
-    retryLevel(currentLevelIndex);
-    navigate("/quiz");
-  };
-
-  // Move to next level and start it immediately
-  const handleNextLevel = () => {
-    const nextLevelIndex = currentLevelIndex + 1;
-
-    if (nextLevelIndex < levels.length) {
-      // Use selectLevel to properly reset provider state for the next level
-      selectLevel(nextLevelIndex);
-      navigate("/quiz");
-    } else {
-      navigate("/home");
-    }
-  };
-
   const isLastLevel = currentLevelIndex + 1 >= levels.length;
+
+  // Auto transition to Review screen after short delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/review");
+    }, 4000); // 4 seconds
+
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6 relative">
@@ -158,42 +133,12 @@ export default function ResultsScreen() {
         </div>
 
         <motion.div
-          className="flex flex-col sm:flex-row gap-4 mt-4 w-full justify-center"
+          className="text-sm text-gray-500 mt-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.8 }}
         >
-          <motion.button
-            onClick={handlePlayAgain}
-            className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 to-teal-400 text-white font-semibold py-3 px-6 rounded-xl shadow hover:opacity-90"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Play Again
-          </motion.button>
-
-          <motion.button
-            onClick={() => navigate("/review")}
-            disabled={answeredQuestions.length === 0}
-            className={`w-full sm:w-auto font-semibold py-3 px-6 rounded-xl shadow transition ${
-              answeredQuestions.length === 0
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-            whileHover={answeredQuestions.length > 0 ? { scale: 1.05 } : {}}
-            whileTap={answeredQuestions.length > 0 ? { scale: 0.97 } : {}}
-          >
-            Review Answers
-          </motion.button>
-
-          <motion.button
-            onClick={handleNextLevel}
-            className="w-full sm:w-auto bg-white text-emerald-700 border border-emerald-200 font-semibold py-3 px-6 rounded-xl shadow hover:bg-emerald-50"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            {isLastLevel ? "Back Home" : "Next Level"}
-          </motion.button>
+          Redirecting to Review...
         </motion.div>
       </motion.div>
     </div>
