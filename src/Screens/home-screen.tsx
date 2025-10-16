@@ -1,8 +1,8 @@
 // src/screens/HomeScreen.tsx
-import { useGame } from "../context/useGame";
+import { useGame } from "../context/use-game";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import logoIcon from "../assets/icons/fulllogo_transparent_nobuffer.png";
+import logoIcon from "../assets/icons/full-logo.png";
 
 export default function HomeScreen() {
   const navigate = useNavigate();

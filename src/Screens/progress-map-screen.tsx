@@ -2,9 +2,9 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { useGame } from "../context/useGame";
+import { useGame } from "../context/use-game";
 import { pickQuestionsForUser } from "../data/levels";
-import { allQuestionsById } from "../data/allQuestions";
+import { allQuestionsById } from "../data/all-questions";
 
 export default function ProgressMap() {
   const { levels, currentLevelIndex, user, updateUser, selectLevel } =

@@ -3,8 +3,8 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Level, User, Question, Badge } from "../types";
 import { levels as initialLevels, pickQuestionsForUser } from "../data/levels";
-import { allQuestionsById } from "../data/allQuestions";
-import { GameContext } from "./gameContextCore";
+import { allQuestionsById } from "../data/all-questions";
+import { GameContext } from "./game-context-core";
 import { badges } from "../data/badges";
 
 // --- Unified AnsweredQuestion type

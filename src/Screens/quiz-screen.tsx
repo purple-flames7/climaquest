@@ -4,15 +4,15 @@ import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
-import { useGame } from "../context/useGame";
+import { useGame } from "../context/use-game";
 import type {
   Question,
   MultipleChoiceQuestion,
   TrueFalseQuestion,
   ShortAnswerQuestion,
 } from "../types/question";
-import { isMCQ, isTrueFalse, isShortAnswer } from "../utils/questionGuards";
-import { allQuestionsById } from "../data/allQuestions";
+import { isMCQ, isTrueFalse, isShortAnswer } from "../utils/question-guards";
+import { allQuestionsById } from "../data/all-questions";
 
 export default function QuizScreen() {
   const navigate = useNavigate();

@@ -3,7 +3,7 @@
 import type { Level } from "../types/level";
 import type { Question } from "../types/question";
 import type { User } from "../types/user";
-import type { AnsweredQuestion } from "./GameProvider";
+import type { AnsweredQuestion } from "./game-provider";
 import type { Badge } from "../types/user";
 export interface GameContextProps {
   levels: Level[];

@@ -1,11 +1,11 @@
 // src/data.allQuestions.ts
 
 import type { Question } from "../types/question";
-import { climateScienceQuestions } from "./questions/climateScience";
-import { climateJusticeQuestions } from "./questions/climateJustice";
-import { queerClimateQuestions } from "./questions/queerClimate";
-import { communityKnowledgeQuestions } from "./questions/communityKnowledge";
-import { climateSolutionsQuestions } from "./questions/climateSolutions";
+import { climateScienceQuestions } from "./questions/climate-science";
+import { climateJusticeQuestions } from "./questions/climate-justice";
+import { queerClimateQuestions } from "./questions/queer-climate";
+import { communityKnowledgeQuestions } from "./questions/community-knowledge";
+import { climateSolutionsQuestions } from "./questions/climate-solutions";
 
 const categories = [
   ...climateScienceQuestions,

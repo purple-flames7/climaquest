@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import logoIcon from "../assets/icons/icononly_transparent_nobuffer.png";
+import logoIcon from "../assets/icons/big-logo-icon.png";
 
 export default function SplashScreen() {
   const navigate = useNavigate();

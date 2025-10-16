@@ -1,4 +1,4 @@
-import { GradientBackground } from "../ui/GradientBackground";
+import { GradientBackground } from "../ui/gradient-background";
 
 interface ScreenWrapperProps {
   children: React.ReactNode;

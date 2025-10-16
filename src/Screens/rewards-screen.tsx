@@ -1,7 +1,7 @@
 // src/screens/RewardsScreen.tsx
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useGame } from "../context/useGame";
+import { useGame } from "../context/use-game";
 import { useEffect } from "react";
 import { Award, Star, Zap } from "lucide-react";
 import confetti from "canvas-confetti";

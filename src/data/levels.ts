@@ -1,7 +1,7 @@
 // src/data/levels.ts
 
 import type { Level, Category } from "../types";
-import { allQuestionsById } from "./allQuestions";
+import { allQuestionsById } from "./all-questions";
 
 // The categories for levels
 export const categories: Category[] = [
