@@ -1,5 +1,3 @@
-// src/context/gameContextTypes.ts
-
 import type { Level, Question, User, Badge } from "../types";
 import type { AnsweredQuestion } from "./game-provider";
 export interface GameContextProps {

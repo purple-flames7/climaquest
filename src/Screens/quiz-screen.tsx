@@ -1,4 +1,3 @@
-// src/screens/QuizScreen.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,9 +9,10 @@ import type {
   MultipleChoiceQuestion,
   TrueFalseQuestion,
   ShortAnswerQuestion,
-} from "../types/question";
-import { isMCQ, isTrueFalse, isShortAnswer } from "../utils/question-guards";
-import { allQuestionsById } from "../data/all-questions";
+} from "../types";
+import { isMCQ, isTrueFalse, isShortAnswer, sanitizeInput } from "../utils";
+import { ShortAnswerInput } from "../components";
+import { allQuestionsById } from "../data";
 
 export default function QuizScreen() {
   const navigate = useNavigate();
@@ -22,7 +22,6 @@ export default function QuizScreen() {
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [typedAnswer, setTypedAnswer] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -38,33 +37,35 @@ export default function QuizScreen() {
   const currentQuestion = questions[currentQuestionIndex];
   if (!currentQuestion) return <div>Loading question...</div>;
 
-  const handleSubmitAnswer = (answer?: string) => {
+  const handleSubmitAnswer = (answer: string) => {
     if (showFeedback) return;
 
     let correct = false;
-    if (isMCQ(currentQuestion) && answer) {
+    const userAnswer = answer;
+
+    if (isMCQ(currentQuestion)) {
       const mcq = currentQuestion as MultipleChoiceQuestion;
-      correct = mcq.options[mcq.correctOptionIndex] === answer;
-      setSelectedAnswer(answer);
-    } else if (isTrueFalse(currentQuestion) && answer) {
+      correct = mcq.options[mcq.correctOptionIndex] === userAnswer;
+      setSelectedAnswer(userAnswer);
+    } else if (isTrueFalse(currentQuestion)) {
       const tf = currentQuestion as TrueFalseQuestion;
-      correct = tf.answer === (answer === "true");
-      setSelectedAnswer(answer);
+      correct = tf.answer === (userAnswer === "true");
+      setSelectedAnswer(userAnswer);
     } else if (isShortAnswer(currentQuestion)) {
       const sa = currentQuestion as ShortAnswerQuestion;
+
+      // acceptableAnswers normalized once
       correct = sa.acceptableAnswers.some(
-        (ans) => ans.toLowerCase() === typedAnswer.trim().toLowerCase()
+        (ans) => sanitizeInput(ans) === userAnswer
       );
-      setSelectedAnswer(typedAnswer);
+
+      setSelectedAnswer(userAnswer);
     }
 
-    answerQuestion(
-      currentQuestion.id,
-      correct,
-      selectedAnswer ?? typedAnswer,
-      currentQuestion
-    );
+    // Pass sanitized + normalized answer from ShortAnswerInput to context
+    answerQuestion(currentQuestion.id, correct, userAnswer, currentQuestion);
 
+    // Update user progress
     const progressIndex = user.progress.findIndex(
       (p) => p.levelId === currentLevel.id
     );
@@ -83,7 +84,7 @@ export default function QuizScreen() {
         completed: false,
         questionsAnswered: [currentQuestion.id],
         xpEarned: correct ? currentLevel.xpReward : 0,
-        questionIDs: currentLevel.questionIDs, //  FIXED
+        questionIDs: currentLevel.questionIDs,
       });
     }
 
@@ -98,7 +99,6 @@ export default function QuizScreen() {
   };
 
   const handleNext = () => {
-    setTypedAnswer("");
     setSelectedAnswer(null);
     setShowFeedback(false);
 
@@ -202,24 +202,13 @@ export default function QuizScreen() {
             )}
 
             {/* Short Answer */}
-            {isShortAnswer(currentQuestion) && !showFeedback && (
-              <div className="flex flex-col space-y-3">
-                <input
-                  type="text"
-                  value={typedAnswer}
-                  onChange={(e) => setTypedAnswer(e.target.value)}
-                  placeholder="Type your answer..."
-                  className="border border-emerald-200 focus:ring-2 focus:ring-emerald-400 rounded-lg p-3 text-gray-700"
-                />
-                <motion.button
-                  onClick={() => handleSubmitAnswer()}
-                  className="bg-emerald-500 text-white py-2 px-6 rounded-lg hover:bg-emerald-600 font-semibold"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  Submit
-                </motion.button>
-              </div>
+            {isShortAnswer(currentQuestion) && (
+              <ShortAnswerInput
+                correctAnswer={currentQuestion.acceptableAnswers[0]}
+                selectedAnswer={selectedAnswer ?? ""}
+                showFeedback={showFeedback}
+                onSubmit={handleSubmitAnswer} // Pass directly
+              />
             )}
 
             {/* Feedback */}

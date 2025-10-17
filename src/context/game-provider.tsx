@@ -1,4 +1,3 @@
-// src/context/GameProvider.tsx
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Level, User, Question, Badge } from "../types";
@@ -13,6 +12,7 @@ import {
   getLocalStorageData,
   setLocalStorageData,
   removeLocalStorageData,
+  normalizeText,
 } from "../utils";
 
 // --- Unified AnsweredQuestion type
@@ -165,7 +165,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         formattedUserAnswer =
           userAnswer === true || userAnswer === "true" ? "True" : "False";
       } else if (questionData?.type === "shortanswer") {
-        formattedUserAnswer = String(userAnswer).trim();
+        formattedUserAnswer = normalizeText(String(userAnswer));
       }
 
       setAnsweredQuestions((prev) => [

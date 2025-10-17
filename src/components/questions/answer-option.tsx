@@ -1,4 +1,5 @@
 import { Button } from "../ui/button";
+import { normalizeText } from "../../utils";
 
 interface AnswerOptionsProps {
   options: string[];
@@ -15,18 +16,25 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
   showFeedback = false,
   onSelect,
 }) => {
+  const normalizedCorrect = normalizeText(correctAnswer);
+  const normalizedSelected = selected ? normalizeText(selected) : null;
+
   return (
     <div className="flex flex-col gap-3">
       {options.map((opt) => {
-        const isCorrect = showFeedback && opt === correctAnswer;
+        const normalizedOpt = normalizeText(opt);
+
+        const isCorrect = showFeedback && normalizedOpt === normalizedCorrect;
         const isWrong =
-          showFeedback && selected === opt && opt !== correctAnswer;
+          showFeedback &&
+          normalizedSelected === normalizedOpt &&
+          normalizedOpt !== normalizedCorrect;
 
         return (
           <Button
             key={opt}
             label={opt}
-            onClick={() => onSelect(opt)}
+            onClick={() => onSelect(normalizedOpt)}
             disabled={showFeedback}
             className={`transition-colors duration-200 ${
               isCorrect ? "bg-green-500 text-white" : ""
