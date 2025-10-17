@@ -1,5 +1,5 @@
 // src/data/badges.ts
-import type { Badge } from "../types/user";
+import type { Badge } from "../types";
 
 export const badges: Badge[] = [
   {

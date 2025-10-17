@@ -1,10 +1,7 @@
 // src/context/gameContextTypes.ts
 
-import type { Level } from "../types/level";
-import type { Question } from "../types/question";
-import type { User } from "../types/user";
+import type { Level, Question, User, Badge } from "../types";
 import type { AnsweredQuestion } from "./game-provider";
-import type { Badge } from "../types/user";
 export interface GameContextProps {
   levels: Level[];
   currentLevelIndex: number;

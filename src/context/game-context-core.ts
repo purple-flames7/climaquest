@@ -1,5 +1,3 @@
-// src / context / gameContextCore.ts
-
 import { createContext } from "react";
 import type { GameContextProps } from "./game-context-type";
 

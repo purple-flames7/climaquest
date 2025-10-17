@@ -1,7 +1,7 @@
 // src/screens/ReviewScreen.tsx
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useGame } from "../context/use-game";
+import { useGame } from "../context";
 
 export default function ReviewScreen() {
   const navigate = useNavigate();

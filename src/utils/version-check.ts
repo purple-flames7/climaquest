@@ -1,4 +1,4 @@
-import { APP_VERSION } from "../constants/app";
+import { APP_VERSION } from "../constants";
 
 export function checkAppVersion() {
   const storedVersion = localStorage.getItem("appVersion");

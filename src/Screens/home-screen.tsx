@@ -1,5 +1,5 @@
 // src/screens/HomeScreen.tsx
-import { useGame } from "../context/use-game";
+import { useGame } from "../context";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import logoIcon from "../assets/icons/full-logo.png";

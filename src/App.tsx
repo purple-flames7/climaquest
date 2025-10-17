@@ -1,13 +1,15 @@
 // src/App.tsx
 import { Routes, Route } from "react-router";
-import SplashScreen from "./screens/splash-screen";
-import HomeScreen from "./screens/home-screen";
-import TutorialScreen from "./screens/tutorial-screen";
-import ProgressMap from "./screens/progress-map-screen";
-import QuizScreen from "./screens/quiz-screen";
-import ResultsScreen from "./screens/results-screen";
-import ReviewScreen from "./screens/review-screen";
-import RewardsScreen from "./screens/rewards-screen";
+import {
+  SplashScreen,
+  HomeScreen,
+  ProgressMap,
+  TutorialScreen,
+  QuizScreen,
+  ResultsScreen,
+  ReviewScreen,
+  RewardsScreen,
+} from "./screens";
 
 function App() {
   return (

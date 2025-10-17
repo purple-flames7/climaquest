@@ -1,4 +1,3 @@
-// src/constants/colors.ts
 export const COLORS = {
   primary: "#10B981",
   secondary: "#14B8A6",

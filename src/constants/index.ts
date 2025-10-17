@@ -1,4 +1,3 @@
-// src/constants/index.ts
 export * from "./achievements";
 export * from "./api";
 export * from "./categories";
@@ -8,3 +7,4 @@ export * from "./levels";
 export * from "./rewards";
 export * from "./colors";
 export * from "./storage-keys";
+export * from "./app";

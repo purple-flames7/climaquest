@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useGame } from "../context/use-game";
+import { useGame } from "../context";
 
 export default function TutorialScreen() {
   const navigate = useNavigate();

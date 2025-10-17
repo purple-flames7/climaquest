@@ -1,6 +1,6 @@
 // src/utils/calculateXP.ts
 
-import type { Difficulty } from "../types/question";
+import type { Difficulty } from "../types";
 
 export const calculateXP = (
   baseXP: number,

@@ -3,7 +3,7 @@ import type {
   MultipleChoiceQuestion,
   TrueFalseQuestion,
   ShortAnswerQuestion,
-} from "../types/question";
+} from "../types";
 
 export function isMCQ(q: Question): q is MultipleChoiceQuestion {
   return q.type === "mcq";

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
-import { useGame } from "../context/use-game";
+import { useGame } from "../context";
 import type {
   Question,
   MultipleChoiceQuestion,

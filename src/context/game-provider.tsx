@@ -2,10 +2,13 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { Level, User, Question, Badge } from "../types";
-import { levels as initialLevels, pickQuestionsForUser } from "../data/levels";
-import { allQuestionsById } from "../data/all-questions";
+import {
+  levels as initialLevels,
+  pickQuestionsForUser,
+  allQuestionsById,
+  badges,
+} from "../data";
 import { GameContext } from "./game-context-core";
-import { badges } from "../data/badges";
 
 // --- Unified AnsweredQuestion type
 export interface AnsweredQuestion {

@@ -1,5 +1,5 @@
 // src/utils/levelUtils.ts
-import type { Level } from "../types/level";
+import type { Level } from "../types";
 
 export const unlockNextLevel = (
   levels: Level[],

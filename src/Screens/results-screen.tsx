@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
-import { useGame } from "../context/use-game";
+import { useGame } from "../context";
 
 export default function ResultsScreen() {
   const navigate = useNavigate();
