@@ -24,6 +24,7 @@
     "react-use": "^17.6.0",
     "tailwindcss": "^4.1.14",
     "use-local-storage-state": "^19.5.0",
+    "zod": "^4.1.12",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -41,5 +42,4 @@
     "vite": "^7.1.7",
     "vitest": "^3.2.4"
   }
-
 }
