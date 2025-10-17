@@ -2,6 +2,7 @@ import React from "react";
 
 interface ButtonProps {
   label?: string;
+  children?: React.ReactNode;
   onClick: () => void;
   variant?: "primary" | "secondary" | "icon";
   size?: "sm" | "md" | "lg";
@@ -12,6 +13,7 @@ interface ButtonProps {
 
 export const Button: React.FC<ButtonProps> = ({
   label,
+  children,
   onClick,
   variant = "primary",
   size = "md",
@@ -41,7 +43,7 @@ export const Button: React.FC<ButtonProps> = ({
       } ${className}`}
     >
       {icon && <span className="mr-2">{icon}</span>}
-      {label}
+      {children ?? label}
     </button>
   );
 };

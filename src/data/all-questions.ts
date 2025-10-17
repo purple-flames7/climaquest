@@ -1,4 +1,4 @@
-// src/data.allQuestions.ts
+import type { Question } from "../types";
 import { climateScienceQuestions } from "./questions/climate-science";
 import { climateJusticeQuestions } from "./questions/climate-justice";
 import { queerClimateQuestions } from "./questions/queer-climate";
@@ -26,5 +26,6 @@ if (!result.success) {
 
 export const validateQuestions: ValidQuestion[] = result.data;
 
-export const allQuestionsById: Record<string, ValidQuestion> =
-  Object.fromEntries(validateQuestions.map((q) => [q.id, q]));
+export const allQuestionsById: Record<string, Question> = Object.fromEntries(
+  validateQuestions.map((q) => [q.id, q as Question])
+);

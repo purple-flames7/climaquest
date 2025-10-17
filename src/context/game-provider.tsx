@@ -1,21 +1,22 @@
-import { useState } from "react";
+// src/context/GameProvider.tsx
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { Level, User, Question, Badge } from "../types";
 import {
   levels as initialLevels,
   pickQuestionsForUser,
   allQuestionsById,
-  badges,
 } from "../data";
 import { GameContext } from "./game-context-core";
 import {
   getLocalStorageData,
   setLocalStorageData,
   removeLocalStorageData,
-  normalizeText,
+  sanitizeInput,
 } from "../utils";
+import { Fallback } from "../components";
 
-// --- Unified AnsweredQuestion type
+// Unified AnsweredQuestion type
 export interface AnsweredQuestion {
   id: string;
   correct: boolean;
@@ -35,6 +36,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [answeredQuestions, setAnsweredQuestions] = useState<
     AnsweredQuestion[]
   >([]);
+  const [recentXP] = useState<number>(0);
+  const [recentBadge] = useState<Badge[] | null>(null);
 
   const [tutorialCompleted, setTutorialCompleted] = useState<boolean>(() =>
     getLocalStorageData<boolean>("tutorialCompleted", false)
@@ -52,19 +55,53 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     streak: 0,
   });
 
-  const [recentXP, setRecentXP] = useState<number>(0);
-  const [recentBadge, setRecentBadge] = useState<Badge[] | null>(null);
+  // Status for fallback
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading"
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const updateUser = (updatedUser: User) => setUser(updatedUser);
+  // Initialization
+  useEffect(() => {
+    try {
+      const data = getLocalStorageData<boolean>("tutorialCompleted", false);
+      if (typeof data !== "boolean")
+        throw new Error("Corrupted localStorage data detected.");
+      setStatus("ready");
+    } catch (error: unknown) {
+      if (error instanceof Error) setErrorMessage(error.message);
+      else setErrorMessage("Failed to initialize game data.");
+      setStatus("error");
+    }
+  }, []);
 
-  const completeTutorial = () => {
-    setTutorialCompleted(true);
-    setLocalStorageData("tutorialCompleted", true);
-  };
+  // Offline detection
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      if (!navigator.onLine) {
+        setErrorMessage(
+          "You're offline. Please check your internet connection."
+        );
+        setStatus("error");
+      } else if (status === "error" && errorMessage?.includes("offline")) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    updateOnlineStatus();
 
+    return () => {
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
+    };
+  }, [status, errorMessage]);
+
+  // Derived values
   const currentLevel = levels[currentLevelIndex];
-  const currentQuestionId = currentLevel.questionIDs[currentQuestionIndex];
-  const currentQuestion = allQuestionsById[currentQuestionId];
+  const currentQuestionId = currentLevel?.questionIDs?.[currentQuestionIndex];
+  const currentQuestion: Question | undefined =
+    allQuestionsById[currentQuestionId];
 
   const normalizeAnswer = (
     answer: string | boolean | null | undefined
@@ -78,6 +115,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return null;
   };
 
+  const completeTutorial = () => {
+    setTutorialCompleted(true);
+    setLocalStorageData("tutorialCompleted", true);
+  };
+  const updateUser = (updatedUser: User) => setUser(updatedUser);
+
+  // Level & Question logic
   const selectLevel = (index: number) => {
     setCurrentLevelIndex(index);
     setCurrentQuestionIndex(0);
@@ -88,9 +132,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const updatedLevels = [...prevLevels];
       const level = updatedLevels[index];
 
-      if (level.questionIDs.length === 0) {
-        const questionIDs = pickQuestionsForUser(level, {}, false, 5);
-        level.questionIDs = questionIDs;
+      if (!level.questionIDs.length) {
+        level.questionIDs = pickQuestionsForUser(level, {}, false, 5);
       }
 
       setUser((prev) => {
@@ -98,7 +141,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           (p) => p.levelId === level.id
         );
         if (alreadyTracked) return prev;
-
         return {
           ...prev,
           progress: [
@@ -127,11 +169,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!completedQuestions.includes(questionId)) {
       setCompletedQuestions((prev) => [...prev, questionId]);
 
-      // Award XP per question
       const xpForQuestion = correct ? currentLevel.xpReward ?? 10 : 0;
       setXp((prev) => prev + xpForQuestion);
 
-      // Prepare question data
       const questionText =
         questionData?.type === "truefalse"
           ? questionData.statement
@@ -151,7 +191,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           break;
       }
 
-      // Format user answer
       let formattedUserAnswer: string | boolean | null = userAnswer;
       if (questionData?.type === "mcq") {
         const letterIndex =
@@ -165,7 +204,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         formattedUserAnswer =
           userAnswer === true || userAnswer === "true" ? "True" : "False";
       } else if (questionData?.type === "shortanswer") {
-        formattedUserAnswer = normalizeText(String(userAnswer));
+        formattedUserAnswer = sanitizeInput(String(userAnswer));
       }
 
       setAnsweredQuestions((prev) => [
@@ -183,55 +222,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       ]);
     }
 
-    // Progression logic
-    const nextQuestionIndex = currentQuestionIndex + 1;
-    setCurrentQuestionIndex(nextQuestionIndex);
-
-    const allAnswered = currentLevel.questionIDs.every(
-      (qId) => completedQuestions.includes(qId) || qId === questionId
-    );
-
-    if (allAnswered) {
-      const nextLevelIndex = currentLevelIndex + 1;
-
-      // Mark level completed and unlock next
-      setLevels((prev) =>
-        prev.map((lvl, idx) => {
-          if (idx === currentLevelIndex) return { ...lvl, completed: true };
-          if (idx === nextLevelIndex) return { ...lvl, unlocked: true };
-          return lvl;
-        })
-      );
-
-      // --- Calculate XP for this level
-      const earnedXP = currentLevel.questionIDs.reduce((sum, qId) => {
-        const ans = answeredQuestions.find((a) => a.id === qId);
-        return sum + ((ans?.correct ? currentLevel.xpReward ?? 10 : 0) || 0);
-      }, 0);
-      setRecentXP(earnedXP);
-
-      // --- Calculate badges
-      const newBadges: Badge[] = [];
-      const alreadyBadgeIds = user.badges?.map((b) => b.id) ?? [];
-
-      if (!alreadyBadgeIds.includes("eco-starter"))
-        newBadges.push(badges.find((b) => b.id === "eco-starter")!);
-      const allCorrect = answeredQuestions.every((a) => a.correct);
-      if (allCorrect && !alreadyBadgeIds.includes("perfect-score"))
-        newBadges.push(badges.find((b) => b.id === "perfect-score")!);
-
-      const updatedTotalXP = user.totalXp + earnedXP;
-      if (updatedTotalXP >= 500 && !alreadyBadgeIds.includes("xp-500"))
-        newBadges.push(badges.find((b) => b.id === "xp-500")!);
-
-      // --- Update user
-      setRecentBadge(newBadges.length > 0 ? newBadges : null);
-      setUser((prev) => ({
-        ...prev,
-        totalXp: updatedTotalXP,
-        badges: [...(prev.badges ?? []), ...newBadges],
-      }));
-    }
+    setCurrentQuestionIndex((prev) => prev + 1);
   };
 
   const retryLevel = (index: number) => {
@@ -244,11 +235,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const updated = [...prevLevels];
       const level = updated[index];
       const savedProgress = user.progress.find((p) => p.levelId === level.id);
-
-      if (savedProgress?.questionIDs?.length) {
+      if (savedProgress?.questionIDs?.length)
         level.questionIDs = [...savedProgress.questionIDs];
-      }
-
       updated[index] = { ...level, completed: false };
       return updated;
     });
@@ -275,6 +263,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     removeLocalStorageData("tutorialCompleted");
     setTutorialCompleted(false);
   };
+
+  // --- Fallback handling
+  if (status === "loading") return <Fallback type="loading" />;
+  if (status === "error")
+    return (
+      <Fallback
+        type="error"
+        message={errorMessage ?? undefined}
+        onRetry={() => window.location.reload()}
+      />
+    );
 
   return (
     <GameContext.Provider
