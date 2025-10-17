@@ -4,3 +4,4 @@ export * from "./levels-utils";
 export * from "./question-guards";
 export * from "./shuffle-array";
 export * from "./version-check";
+export * from "./storage";

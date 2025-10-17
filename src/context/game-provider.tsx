@@ -9,6 +9,11 @@ import {
   badges,
 } from "../data";
 import { GameContext } from "./game-context-core";
+import {
+  getLocalStorageData,
+  setLocalStorageData,
+  removeLocalStorageData,
+} from "../utils";
 
 // --- Unified AnsweredQuestion type
 export interface AnsweredQuestion {
@@ -31,10 +36,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     AnsweredQuestion[]
   >([]);
 
-  const [tutorialCompleted, setTutorialCompleted] = useState<boolean>(() => {
-    const stored = localStorage.getItem("tutorialCompleted");
-    return stored ? JSON.parse(stored) : false;
-  });
+  const [tutorialCompleted, setTutorialCompleted] = useState<boolean>(() =>
+    getLocalStorageData<boolean>("tutorialCompleted", false)
+  );
 
   const [user, setUser] = useState<User>({
     id: "1",
@@ -55,7 +59,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const completeTutorial = () => {
     setTutorialCompleted(true);
-    localStorage.setItem("tutorialCompleted", "true");
+    setLocalStorageData("tutorialCompleted", true);
   };
 
   const currentLevel = levels[currentLevelIndex];
@@ -227,8 +231,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         totalXp: updatedTotalXP,
         badges: [...(prev.badges ?? []), ...newBadges],
       }));
-
-      // Do NOT auto-navigate — rewards screen navigation is manual
     }
   };
 
@@ -270,7 +272,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       badges: [],
       streak: 0,
     });
-    localStorage.removeItem("tutorialCompleted");
+    removeLocalStorageData("tutorialCompleted");
     setTutorialCompleted(false);
   };
 
