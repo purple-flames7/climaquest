@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Button } from "../ui/button";
-import { normalizeText } from "../../utils";
+import { sanitizeInput } from "../../utils";
 
 interface AnswerOptionsProps {
   options: string[];
@@ -20,8 +20,8 @@ export const AnswerOptions = memo(
     isChecking = false,
     onSelect,
   }: AnswerOptionsProps) => {
-    const normalizedCorrect = normalizeText(correctAnswer);
-    const normalizedSelected = selected ? normalizeText(selected) : null;
+    const normalizedCorrect = sanitizeInput(correctAnswer);
+    const normalizedSelected = selected ? sanitizeInput(selected) : null;
 
     return (
       <div
@@ -30,7 +30,7 @@ export const AnswerOptions = memo(
         aria-label="Answer options"
       >
         {options.map((opt) => {
-          const normalizedOpt = normalizeText(opt);
+          const normalizedOpt = sanitizeInput(opt);
 
           const isCorrect = showFeedback && normalizedOpt === normalizedCorrect;
           const isWrong =
