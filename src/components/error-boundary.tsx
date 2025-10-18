@@ -1,4 +1,3 @@
-// src/components/ErrorBoundary.tsx
 import React from "react";
 import { Fallback } from "./ui/fallback";
 

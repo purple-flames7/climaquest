@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
+
 import { useGame } from "../context";
 import type {
   Question,
@@ -11,7 +12,8 @@ import type {
   ShortAnswerQuestion,
 } from "../types";
 import { isMCQ, isTrueFalse, isShortAnswer, sanitizeInput } from "../utils";
-import { ShortAnswerInput } from "../components";
+
+import { AnswerOptions, ShortAnswerInput, FeedbackBanner } from "../components";
 import { allQuestionsById } from "../data";
 
 export default function QuizScreen() {
@@ -24,7 +26,9 @@ export default function QuizScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
+  // Get current level and questions
   const currentLevel = levels[currentLevelIndex];
   if (!currentLevel) return <div>Loading level...</div>;
 
@@ -37,6 +41,7 @@ export default function QuizScreen() {
   const currentQuestion = questions[currentQuestionIndex];
   if (!currentQuestion) return <div>Loading question...</div>;
 
+  // --- Handle answer submission ---
   const handleSubmitAnswer = (answer: string) => {
     if (showFeedback) return;
 
@@ -46,23 +51,27 @@ export default function QuizScreen() {
     if (isMCQ(currentQuestion)) {
       const mcq = currentQuestion as MultipleChoiceQuestion;
       correct = mcq.options[mcq.correctOptionIndex] === userAnswer;
-      setSelectedAnswer(userAnswer);
     } else if (isTrueFalse(currentQuestion)) {
       const tf = currentQuestion as TrueFalseQuestion;
       correct = tf.answer === (userAnswer === "true");
-      setSelectedAnswer(userAnswer);
     } else if (isShortAnswer(currentQuestion)) {
       const sa = currentQuestion as ShortAnswerQuestion;
-
-      // acceptableAnswers normalized once
       correct = sa.acceptableAnswers.some(
-        (ans) => sanitizeInput(ans) === userAnswer
+        (ans) => sanitizeInput(ans) === sanitizeInput(userAnswer)
       );
-
-      setSelectedAnswer(userAnswer);
     }
 
-    // Pass sanitized + normalized answer from ShortAnswerInput to context
+    setSelectedAnswer(userAnswer);
+    setIsCorrect(correct);
+    setShowFeedback(true);
+
+    // Confetti animation
+    if (correct) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 1800);
+    }
+
+    // Update context state
     answerQuestion(currentQuestion.id, correct, userAnswer, currentQuestion);
 
     // Update user progress
@@ -89,18 +98,13 @@ export default function QuizScreen() {
     }
 
     updateUser({ ...user, progress: newProgress });
-
-    if (correct) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 1800);
-    }
-
-    setShowFeedback(true);
   };
 
+  // --- Handle Next Question ---
   const handleNext = () => {
     setSelectedAnswer(null);
     setShowFeedback(false);
+    setIsCorrect(null);
 
     const isLastQuestion = currentQuestionIndex + 1 >= questions.length;
     if (!isLastQuestion) {
@@ -110,6 +114,7 @@ export default function QuizScreen() {
     }
   };
 
+  // --- Derived UI state ---
   const totalQuestions = questions.length;
   const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
@@ -119,22 +124,9 @@ export default function QuizScreen() {
     ? ["true", "false"]
     : [];
 
-  const getButtonClasses = (option: string) => {
-    if (!showFeedback)
-      return "bg-white/70 hover:bg-white text-gray-800 border border-emerald-200";
-
-    const correctOption =
-      (isMCQ(currentQuestion) &&
-        currentQuestion.options[currentQuestion.correctOptionIndex]) ||
-      (isTrueFalse(currentQuestion) &&
-        (currentQuestion.answer ? "true" : "false"));
-
-    if (option === correctOption)
-      return "bg-emerald-400 text-white border border-emerald-500";
-    if (option === selectedAnswer)
-      return "bg-red-400 text-white border border-red-500";
-    return "bg-white/70 text-gray-700 border border-gray-200";
-  };
+  const questionText = isTrueFalse(currentQuestion)
+    ? currentQuestion.statement
+    : currentQuestion.question;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6">
@@ -153,7 +145,7 @@ export default function QuizScreen() {
         transition={{ duration: 0.6 }}
         className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-xl relative flex flex-col space-y-6"
       >
-        {/* Title and Progress */}
+        {/* Level Title & Progress */}
         <div>
           <h2 className="text-2xl font-bold text-emerald-700 text-center mb-3">
             {currentLevel.title}
@@ -177,28 +169,28 @@ export default function QuizScreen() {
             transition={{ duration: 0.45, ease: "easeInOut" }}
           >
             <p className="text-lg text-gray-800 font-medium mb-6 text-center">
-              {isTrueFalse(currentQuestion)
-                ? currentQuestion.statement
-                : currentQuestion.question}
+              {questionText}
             </p>
 
-            {/* Options */}
+            {/* Multiple Choice or True/False */}
             {answerOptions.length > 0 && (
-              <div className="flex flex-col space-y-3">
-                {answerOptions.map((opt) => (
-                  <motion.button
-                    key={opt}
-                    onClick={() => handleSubmitAnswer(opt)}
-                    className={`py-3 px-4 rounded-xl transition-colors font-semibold ${getButtonClasses(
-                      opt
-                    )}`}
-                    whileHover={{ scale: selectedAnswer === opt ? 1 : 1.05 }}
-                    whileTap={{ scale: selectedAnswer === opt ? 1 : 0.97 }}
-                  >
-                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                  </motion.button>
-                ))}
-              </div>
+              <AnswerOptions
+                options={answerOptions}
+                selected={selectedAnswer ?? ""}
+                correctAnswer={
+                  isMCQ(currentQuestion)
+                    ? currentQuestion.options[
+                        currentQuestion.correctOptionIndex
+                      ]
+                    : isTrueFalse(currentQuestion)
+                    ? currentQuestion.answer
+                      ? "true"
+                      : "false"
+                    : ""
+                }
+                showFeedback={showFeedback}
+                onSelect={handleSubmitAnswer}
+              />
             )}
 
             {/* Short Answer */}
@@ -207,42 +199,32 @@ export default function QuizScreen() {
                 correctAnswer={currentQuestion.acceptableAnswers[0]}
                 selectedAnswer={selectedAnswer ?? ""}
                 showFeedback={showFeedback}
-                onSubmit={handleSubmitAnswer} // Pass directly
+                onSubmit={handleSubmitAnswer}
               />
             )}
 
-            {/* Feedback */}
-            <AnimatePresence>
-              {showFeedback && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-6 bg-white/60 border border-emerald-200 p-4 rounded-xl text-center"
-                >
-                  <p className="font-semibold text-gray-800 mb-2">
-                    {selectedAnswer
-                      ? `You chose: ${selectedAnswer}`
-                      : "Answer submitted"}
-                  </p>
-                  <p className="text-gray-600 text-sm">
-                    {currentQuestion.explanation}
-                  </p>
+            {/* Feedback Banner */}
+            <FeedbackBanner
+              correct={isCorrect ?? undefined}
+              show={showFeedback}
+              explanation={currentQuestion.explanation}
+            />
 
-                  <motion.button
-                    onClick={handleNext}
-                    className="mt-4 bg-gradient-to-r from-emerald-400 to-teal-400 text-white font-bold py-2 px-6 rounded-lg shadow hover:opacity-90"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Next
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Next Button */}
+            {showFeedback && (
+              <motion.button
+                onClick={handleNext}
+                className="mt-5 bg-gradient-to-r from-emerald-400 to-teal-400 text-white font-bold py-2 px-6 rounded-lg shadow hover:opacity-90"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Next
+              </motion.button>
+            )}
           </motion.div>
         </AnimatePresence>
 
+        {/* Footer Progress */}
         <div className="text-center text-gray-700 font-medium">
           Question {currentQuestionIndex + 1} / {totalQuestions}
         </div>
