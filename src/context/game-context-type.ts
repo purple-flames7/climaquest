@@ -18,6 +18,9 @@ export interface GameState {
   // status for fallback/errors
   status: "loading" | "ready" | "error";
   errorMessage: string | null;
+
+  lastUpdated?: number;
+  version?: number;
 }
 
 export interface GameContextProps {
