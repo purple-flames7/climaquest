@@ -5,12 +5,7 @@ import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 
 import { useGame } from "../context";
-import type {
-  Question,
-  MultipleChoiceQuestion,
-  TrueFalseQuestion,
-  ShortAnswerQuestion,
-} from "../types";
+import type { Question } from "../types";
 import { isMCQ, isTrueFalse, isShortAnswer, sanitizeInput } from "../utils";
 
 import { AnswerOptions, ShortAnswerInput, FeedbackBanner } from "../components";
@@ -19,16 +14,22 @@ import { allQuestionsById } from "../data";
 export default function QuizScreen() {
   const navigate = useNavigate();
   const { width, height } = useWindowSize();
-  const { currentLevelIndex, levels, answerQuestion, user, updateUser } =
-    useGame();
 
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  // Grab everything needed from context
+  const {
+    currentLevelIndex,
+    levels,
+    currentQuestionIndex,
+    currentQuestion,
+    answerQuestion,
+    nextQuestion,
+  } = useGame();
+
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  // Get current level and questions
   const currentLevel = levels[currentLevelIndex];
   if (!currentLevel) return <div>Loading level...</div>;
 
@@ -38,66 +39,46 @@ export default function QuizScreen() {
 
   if (questions.length === 0) return <div>No questions available</div>;
 
-  const currentQuestion = questions[currentQuestionIndex];
   if (!currentQuestion) return <div>Loading question...</div>;
+
+  const answerOptions = isMCQ(currentQuestion)
+    ? currentQuestion.options
+    : isTrueFalse(currentQuestion)
+    ? ["true", "false"]
+    : [];
+
+  const questionText = isTrueFalse(currentQuestion)
+    ? currentQuestion.statement
+    : currentQuestion.question;
 
   // --- Handle answer submission ---
   const handleSubmitAnswer = (answer: string) => {
     if (showFeedback) return;
 
     let correct = false;
-    const userAnswer = answer;
 
     if (isMCQ(currentQuestion)) {
-      const mcq = currentQuestion as MultipleChoiceQuestion;
-      correct = mcq.options[mcq.correctOptionIndex] === userAnswer;
+      correct =
+        currentQuestion.options[currentQuestion.correctOptionIndex] === answer;
     } else if (isTrueFalse(currentQuestion)) {
-      const tf = currentQuestion as TrueFalseQuestion;
-      correct = tf.answer === (userAnswer === "true");
+      correct = currentQuestion.answer === (answer === "true");
     } else if (isShortAnswer(currentQuestion)) {
-      const sa = currentQuestion as ShortAnswerQuestion;
-      correct = sa.acceptableAnswers.some(
-        (ans) => sanitizeInput(ans) === sanitizeInput(userAnswer)
+      correct = currentQuestion.acceptableAnswers.some(
+        (ans) => sanitizeInput(ans) === sanitizeInput(answer)
       );
     }
 
-    setSelectedAnswer(userAnswer);
+    setSelectedAnswer(answer);
     setIsCorrect(correct);
     setShowFeedback(true);
 
-    // Confetti animation
     if (correct) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 1800);
     }
 
-    // Update context state
-    answerQuestion(currentQuestion.id, correct, userAnswer, currentQuestion);
-
-    // Update user progress
-    const progressIndex = user.progress.findIndex(
-      (p) => p.levelId === currentLevel.id
-    );
-    const newProgress = [...user.progress];
-
-    if (progressIndex >= 0) {
-      const levelProgress = { ...newProgress[progressIndex] };
-      if (!levelProgress.questionsAnswered.includes(currentQuestion.id)) {
-        levelProgress.questionsAnswered.push(currentQuestion.id);
-        if (correct) levelProgress.xpEarned += currentLevel.xpReward;
-      }
-      newProgress[progressIndex] = levelProgress;
-    } else {
-      newProgress.push({
-        levelId: currentLevel.id,
-        completed: false,
-        questionsAnswered: [currentQuestion.id],
-        xpEarned: correct ? currentLevel.xpReward : 0,
-        questionIDs: currentLevel.questionIDs,
-      });
-    }
-
-    updateUser({ ...user, progress: newProgress });
+    // Update global state via context
+    answerQuestion(currentQuestion.id, correct, answer, currentQuestion);
   };
 
   // --- Handle Next Question ---
@@ -108,25 +89,14 @@ export default function QuizScreen() {
 
     const isLastQuestion = currentQuestionIndex + 1 >= questions.length;
     if (!isLastQuestion) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      nextQuestion(); // <-- use context function
     } else {
       navigate("/results");
     }
   };
 
-  // --- Derived UI state ---
   const totalQuestions = questions.length;
   const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-
-  const answerOptions: string[] = isMCQ(currentQuestion)
-    ? currentQuestion.options
-    : isTrueFalse(currentQuestion)
-    ? ["true", "false"]
-    : [];
-
-  const questionText = isTrueFalse(currentQuestion)
-    ? currentQuestion.statement
-    : currentQuestion.question;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6">
@@ -172,7 +142,7 @@ export default function QuizScreen() {
               {questionText}
             </p>
 
-            {/* Multiple Choice or True/False */}
+            {/* Multiple Choice / TrueFalse */}
             {answerOptions.length > 0 && (
               <AnswerOptions
                 options={answerOptions}

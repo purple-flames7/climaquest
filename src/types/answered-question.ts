@@ -7,6 +7,6 @@ export interface AnsweredQuestion {
   userAnswer: string | boolean | null;
   questionText: string;
   correctAnswer: string | boolean | null;
-  type?: Question["type"];
+  type: Question["type"];
   options?: string[];
 }
