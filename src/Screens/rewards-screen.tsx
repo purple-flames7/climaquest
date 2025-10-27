@@ -1,14 +1,15 @@
 // src/screens/RewardsScreen.tsx
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useGame } from "../context";
+import { useGameStore } from "../stores";
 import { useEffect } from "react";
 import { Award, Star, Zap } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function RewardsScreen() {
   const navigate = useNavigate();
-  const { recentXP, user, levels, currentLevelIndex, selectLevel } = useGame();
+  const { recentXP, user, levels, currentLevelIndex, selectLevel } =
+    useGameStore();
 
   // --- Confetti on mount
   useEffect(() => {

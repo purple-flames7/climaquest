@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useGame } from "../context";
+import { useGameStore } from "../stores";
 
 export default function TutorialScreen() {
   const navigate = useNavigate();
-  const { completeTutorial } = useGame();
+  const { completeTutorial } = useGameStore();
   const [step, setStep] = useState(1);
 
   const handleNext = () => {

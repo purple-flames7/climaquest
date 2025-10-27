@@ -1,13 +1,12 @@
-// src/screens/HomeScreen.tsx
 import { useState, useEffect } from "react";
-import { useGame } from "../context";
+import { useGameStore } from "../stores";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import logoIcon from "../assets/icons/icon-text-logo.webp";
 
 export default function HomeScreen() {
   const navigate = useNavigate();
-  const { tutorialCompleted, xp } = useGame();
+  const { tutorialCompleted, xp } = useGameStore();
   const [logoLoaded, setLogoLoaded] = useState(false);
 
   // Programmatically preload the home screen logo

@@ -1,96 +1,106 @@
-// src/screens/ProgressMap.tsx
-import { motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { useGame } from "../context/use-game";
-import { pickQuestionsForUser, allQuestionsById } from "../data";
+import { motion } from "framer-motion";
+
+import { useGameStore } from "../stores/game-store";
+import { useProgressStore } from "../stores/progress-store";
 
 export default function ProgressMap() {
-  const { levels, currentLevelIndex, user, updateUser, selectLevel } =
-    useGame();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { levels, currentLevelIndex, selectLevel } = useGameStore();
+  const { unlockedLevels, completedLevels, markLevelCompleted } =
+    useProgressStore();
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to current level
+  // Auto-scroll to last unlocked/current level
   useEffect(() => {
-    if (containerRef.current) {
-      const target = containerRef.current.querySelector(
-        `[data-level="${currentLevelIndex}"]`
-      ) as HTMLElement;
+    if (!containerRef.current || levels.length === 0) return;
 
-      if (target)
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
-      else containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    // Find last unlocked level index
+    const lastUnlockedLevelId = Math.max(...unlockedLevels);
+    const lastUnlockedIndex = levels.findIndex(
+      (lvl) => lvl.id === lastUnlockedLevelId
+    );
+
+    const target = containerRef.current.querySelector(
+      `[data-level="${lastUnlockedIndex}"]`
+    ) as HTMLElement;
+
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [currentLevelIndex]);
-
-  const reversedLevels = [...levels].reverse();
+  }, [levels, unlockedLevels]);
 
   const handleLevelClick = (levelIndex: number) => {
     const level = levels[levelIndex];
-    if (!level.unlocked) return;
+    if (!unlockedLevels.includes(level.id)) return;
 
+    // Select level in game store
     selectLevel(levelIndex);
-    updateUser({ ...user, currentLevelId: level.id });
 
-    // Map answered questions
-    const answeredQuestions: Record<string, boolean> = {};
-    user.progress.forEach((p) =>
-      p.questionsAnswered.forEach((qId) => (answeredQuestions[qId] = true))
-    );
+    // Optional: mark level completed if revisiting
+    if (!completedLevels.includes(level.id)) {
+      markLevelCompleted(level.id);
+    }
 
-    // Pick questions dynamically
-    level.questionIDs = pickQuestionsForUser(level, answeredQuestions, false);
-    const questions = level.questionIDs
-      .map((id) => allQuestionsById[id])
-      .filter(Boolean);
-
-    navigate("/quiz", { state: { level, questions, user } });
+    navigate("/quiz", {
+      state: { level, questions: level.questionIDs },
+    });
   };
+
+  if (!levels.length) {
+    return (
+      <div className="h-screen flex items-center justify-center text-gray-700">
+        Loading levels...
+      </div>
+    );
+  }
 
   return (
     <div
       ref={containerRef}
       className="relative h-screen w-full overflow-y-scroll bg-gradient-to-b from-blue-100 via-green-100 to-yellow-100 p-6"
     >
-      <div className="flex flex-col-reverse items-center space-y-8">
-        {reversedLevels.map((level, idx) => {
-          const originalIndex = levels.length - 1 - idx;
-          const isUnlocked = level.unlocked;
-          const isCurrent = originalIndex === currentLevelIndex;
-          const isCompleted = level.completed;
+      <div className="flex flex-col-reverse items-center space-y-12">
+        {levels.map((level, idx) => {
+          const isUnlocked = unlockedLevels.includes(level.id);
+          const isCompleted = completedLevels.includes(level.id);
+          const isCurrent = idx === currentLevelIndex;
 
           return (
-            <motion.button
+            <motion.div
               key={level.id}
-              data-level={originalIndex}
-              onClick={() => handleLevelClick(originalIndex)}
-              disabled={!isUnlocked}
-              className={`relative w-20 h-20 rounded-full flex items-center justify-center
-                ${
-                  isCompleted
-                    ? "bg-green-700"
-                    : isUnlocked
-                    ? "bg-green-500"
-                    : "bg-gray-400"
-                }
-                ${isCurrent ? "ring-4 ring-yellow-300" : ""}
-                shadow-lg cursor-pointer`}
-              whileHover={isUnlocked ? { scale: 1.1 } : {}}
-              whileTap={isUnlocked ? { scale: 0.95 } : {}}
+              data-level={idx}
+              className="flex flex-col items-center"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.03 }}
-              style={{
-                alignSelf: originalIndex % 2 === 0 ? "flex-start" : "flex-end",
-                marginRight: originalIndex % 2 === 0 ? "20%" : "0%",
-                marginLeft: originalIndex % 2 !== 0 ? "20%" : "0%",
-              }}
             >
-              <span className="text-white font-bold text-lg">
-                Level {originalIndex + 1}
+              {/* Level number circle */}
+              <motion.button
+                onClick={() => handleLevelClick(idx)}
+                disabled={!isUnlocked}
+                className={`w-16 h-16 rounded-full flex items-center justify-center
+            ${
+              isCompleted
+                ? "bg-green-700"
+                : isUnlocked
+                ? "bg-green-500"
+                : "bg-gray-400"
+            }
+            ${isCurrent ? "ring-4 ring-yellow-300" : ""}
+            shadow-lg cursor-pointer`}
+                whileHover={isUnlocked ? { scale: 1.1 } : {}}
+                whileTap={isUnlocked ? { scale: 0.95 } : {}}
+              >
+                <span className="text-white font-bold text-lg">{idx + 1}</span>
+              </motion.button>
+
+              {/* Level title below the circle */}
+              <span className="mt-2 text-center text-gray-700 font-medium max-w-xs">
+                {level.title}
               </span>
-            </motion.button>
+            </motion.div>
           );
         })}
       </div>

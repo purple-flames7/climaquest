@@ -1,8 +1,7 @@
-// src/types/review.ts
-
 export interface ReviewEntry {
   questionId: string;
-  userAnswer: string;
+  // accept boolean for true/false and string for others
+  userAnswer: string | boolean;
   correct: boolean;
-  levelId: number;
+  levelId: string;
 }

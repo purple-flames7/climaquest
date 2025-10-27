@@ -1,99 +1,100 @@
-// src/screens/ResultsScreen.tsx
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
-import { useGame } from "../context";
+import { useGameStore, useUserStore, useProgressStore } from "../stores";
+import { Award, Star, Zap } from "lucide-react";
+import { badges as allBadges } from "../data/badges";
 
 export default function ResultsScreen() {
   const navigate = useNavigate();
   const { width, height } = useWindowSize();
 
-  const { user, levels, currentLevelIndex, updateUser, answeredQuestions } =
-    useGame();
+  const { levels, currentLevelIndex, answeredQuestions, selectLevel } =
+    useGameStore();
+  const { addXP, addBadge } = useUserStore();
+  const { markLevelCompleted } = useProgressStore();
 
   const level = levels[currentLevelIndex];
-  const levelQuestionIds = new Set(level.questionIDs);
-  const thisLevelAnswers = answeredQuestions.filter((a) =>
-    levelQuestionIds.has(a.id)
-  );
 
-  const totalQuestions = level.questionIDs.length;
-  const correctCount = thisLevelAnswers.filter((a) => a.correct).length;
-  const questionsAnswered = thisLevelAnswers.length;
-
-  const xpPerQuestion = level.xpReward ?? 10;
+  // --- Compute results ---
+  const levelAnswers = level
+    ? answeredQuestions.filter((a) => level.questionIDs.includes(a.id))
+    : [];
+  const totalQuestions = level ? level.questionIDs.length : 0;
+  const correctCount = levelAnswers.filter((a) => a.correct).length;
+  const questionsAnswered = levelAnswers.length;
+  const xpPerQuestion = level?.xpReward ?? 10;
   const xpEarned = correctCount * xpPerQuestion;
-
   const correctRatio =
     totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-
-  // Update progress safely
-  useEffect(() => {
-    const progressEntry = user.progress.find((p) => p.levelId === level.id);
-    const shouldComplete = questionsAnswered >= totalQuestions;
-
-    if (!progressEntry) {
-      updateUser({
-        ...user,
-        progress: [
-          ...user.progress,
-          {
-            levelId: level.id,
-            completed: shouldComplete,
-            questionsAnswered: thisLevelAnswers.map((a) => a.id),
-            xpEarned,
-            questionIDs: level.questionIDs,
-          },
-        ],
-      });
-    } else {
-      const sameCount =
-        progressEntry.questionsAnswered?.length === thisLevelAnswers.length;
-      const sameXp = progressEntry.xpEarned === xpEarned;
-
-      if (!sameCount || !sameXp || progressEntry.completed !== shouldComplete) {
-        const updatedProgress = user.progress.map((p) =>
-          p.levelId === level.id
-            ? {
-                ...p,
-                questionsAnswered: Array.from(
-                  new Set([
-                    ...p.questionsAnswered,
-                    ...thisLevelAnswers.map((a) => a.id),
-                  ])
-                ),
-                xpEarned,
-                completed: shouldComplete,
-              }
-            : p
-        );
-        updateUser({ ...user, progress: updatedProgress });
-      }
-    }
-    //  eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionsAnswered, xpEarned, level.id]);
-
   const isLastLevel = currentLevelIndex + 1 >= levels.length;
 
-  // Auto transition to Review screen after short delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate("/review");
-    }, 4000); // 4 seconds
+  // --- Badge logic ---
+  const earnedBadge =
+    correctRatio === 100
+      ? allBadges.find((b) => b.name === "Accuracy Ace")
+      : null;
 
-    return () => clearTimeout(timer);
-  }, [navigate]);
+  // --- Update stores once on mount ---
+  useEffect(() => {
+    if (!level) return; // guard inside hook, not before
+    addXP(xpEarned);
+    markLevelCompleted(level.id);
+    if (earnedBadge) addBadge(earnedBadge);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level]);
+
+  // --- Icons ---
+  const getIcon = (iconName?: string) => {
+    switch (iconName) {
+      case "Award":
+        return <Award className="w-8 h-8 text-yellow-500" />;
+      case "Star":
+        return <Star className="w-8 h-8 text-yellow-400" />;
+      case "Zap":
+        return <Zap className="w-8 h-8 text-green-500" />;
+      default:
+        return <Award className="w-8 h-8 text-yellow-500" />;
+    }
+  };
+
+  // --- Navigation ---
+  const handleNext = () => {
+    if (!level) return;
+
+    if (!isLastLevel) {
+      const nextLevelIndex = currentLevelIndex + 1;
+      selectLevel(nextLevelIndex);
+      const nextLevel = levels[nextLevelIndex];
+      navigate("/quiz", {
+        state: { level: nextLevel, questions: nextLevel.questionIDs },
+      });
+    } else {
+      navigate("/progress-map");
+    }
+  };
+
+  // --- Fallback render ---
+  if (!level) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-emerald-700">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6 relative">
-      <Confetti
-        width={width}
-        height={height}
-        recycle={false}
-        numberOfPieces={200}
-      />
+      {earnedBadge && (
+        <Confetti
+          width={width}
+          height={height}
+          recycle={false}
+          numberOfPieces={200}
+        />
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -107,6 +108,7 @@ export default function ResultsScreen() {
 
         <p className="text-gray-700 font-medium text-lg">{level.title}</p>
 
+        {/* XP Summary */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -132,14 +134,29 @@ export default function ResultsScreen() {
           </p>
         </div>
 
-        <motion.div
-          className="text-sm text-gray-500 mt-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+        {/* Badge */}
+        {earnedBadge && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-white shadow-lg rounded-2xl p-4 w-full flex items-center justify-center space-x-4"
+          >
+            {getIcon(earnedBadge.icon)}
+            <div className="text-left">
+              <p className="font-bold text-emerald-700">{earnedBadge.name}</p>
+              <p className="text-gray-600 text-sm">{earnedBadge.description}</p>
+            </div>
+          </motion.div>
+        )}
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={handleNext}
+          className="bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-emerald-800 transition-all"
         >
-          Redirecting to Review...
-        </motion.div>
+          {isLastLevel ? "Back to Map" : "Next Level"}
+        </motion.button>
       </motion.div>
     </div>
   );

@@ -1,10 +1,10 @@
 // src/data/levels.ts
 
-import type { Level, Category } from "../types";
+import type { Level } from "../types";
 import { allQuestionsById } from "./all-questions";
 
-// The categories for levels
-export const categories: Category[] = [
+// The five categories
+export const categories = [
   "Climate Science",
   "Climate Justice & Inequality",
   "Queer & Feminist Climate Futures",
@@ -12,9 +12,8 @@ export const categories: Category[] = [
   "Climate Solutions",
 ];
 
-// Level titles
+// Level titles (30 total)
 const levelTitles: string[] = [
-  // Easy (1–10)
   "Sprout of Awareness",
   "Breezy Beginnings",
   "Seeds of Change",
@@ -25,8 +24,6 @@ const levelTitles: string[] = [
   "Eco Explorers",
   "Whispers of Justice",
   "Illuminated Leaves",
-
-  // Medium (11–20)
   "Rising Tides",
   "Solar Surge",
   "Community Pulse",
@@ -37,8 +34,6 @@ const levelTitles: string[] = [
   "Intersectional Sparks",
   "The Green Path",
   "Challenging Currents",
-
-  // Hard (21–30)
   "Tempest Trials",
   "Radical Roots",
   "Eco Revolution",
@@ -51,53 +46,41 @@ const levelTitles: string[] = [
   "Horizon Reimagined",
 ];
 
-// Create levels
-export const levels: Level[] = Array.from({ length: 30 }, (_, i) => {
-  let difficulty: "easy" | "medium" | "hard" = "easy";
-  if (i >= 20) difficulty = "hard";
-  else if (i >= 10) difficulty = "medium";
+// --- Build Levels deterministically ---
+export const levels: Level[] = (() => {
+  const allQuestions = Object.values(allQuestionsById);
 
-  return {
-    id: i + 1,
-    title: levelTitles[i],
-    completed: false,
-    unlocked: i === 0,
-    categories, // all categories included in each level
-    difficulty,
-    questionIDs: [], // dynamically filled per user
-    xpReward: difficulty === "easy" ? 10 : difficulty === "medium" ? 15 : 20,
-  };
-});
+  return Array.from({ length: 30 }, (_, i) => {
+    // Determine difficulty
+    let difficulty: "easy" | "medium" | "hard" = "easy";
+    if (i >= 20) difficulty = "hard";
+    else if (i >= 10) difficulty = "medium";
 
-export function pickQuestionsForUser(
-  level: Level,
-  answeredQuestions: Record<string, boolean>,
-  allowRepeats = false,
-  numQuestions = 5
-): string[] {
-  // Step 1: Collect the full pool
-  let pool = Object.values(allQuestionsById).filter(
-    (q) =>
-      level.categories.includes(q.category) && q.difficulty === level.difficulty
-  );
+    // Determine category
+    const categoryIndex = Math.floor(i / 6);
+    const category = categories[categoryIndex];
 
-  // Step 2: Filter out already answered ones (if not allowed)
-  if (!allowRepeats) {
-    pool = pool.filter((q) => !answeredQuestions[q.id]);
-  }
-
-  // Step 3: If not enough questions, fallback to all in that difficulty
-  if (pool.length < numQuestions) {
-    pool = Object.values(allQuestionsById).filter(
-      (q) =>
-        level.categories.includes(q.category) &&
-        q.difficulty === level.difficulty
+    // Get all questions for this category
+    const categoryQuestions = allQuestions.filter(
+      (q) => q.category === category
     );
-  }
 
-  // Step 4: Shuffle and take first N
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  const selected = shuffled.slice(0, numQuestions);
+    // Determine slice for this level (5 per level)
+    const start = (i % 6) * 5;
+    const end = start + 5;
 
-  return selected.map((q) => q.id);
-}
+    const levelQuestions = categoryQuestions.slice(start, end);
+
+    // Build level object
+    return {
+      id: i + 1,
+      title: levelTitles[i],
+      completed: false,
+      unlocked: i === 0,
+      categories: [category],
+      difficulty,
+      questionIDs: levelQuestions.map((q) => String(q.id)),
+      xpReward: difficulty === "easy" ? 10 : difficulty === "medium" ? 15 : 20,
+    };
+  });
+})();

@@ -1,11 +1,11 @@
 // src/screens/ReviewScreen.tsx
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useGame } from "../context";
+import { useGameStore } from "../stores";
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
-  const { answeredQuestions } = useGame();
+  const { answeredQuestions } = useGameStore();
 
   if (!answeredQuestions || answeredQuestions.length === 0) {
     return (

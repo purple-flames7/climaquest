@@ -27,5 +27,5 @@ if (!result.success) {
 export const validateQuestions: ValidQuestion[] = result.data;
 
 export const allQuestionsById: Record<string, Question> = Object.fromEntries(
-  validateQuestions.map((q) => [q.id, q as Question])
+  validateQuestions.map((q) => [String(q.id), { ...q, id: String(q.id) }])
 );

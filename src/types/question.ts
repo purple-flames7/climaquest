@@ -1,5 +1,3 @@
-// src/types/questions.ts
-
 export type Difficulty = "easy" | "medium" | "hard";
 
 export type Category =
@@ -17,7 +15,7 @@ export type MultipleChoiceQuestion = {
   question: string;
   options: string[];
   correctOptionIndex: number;
-  explanation: string;
+  explanation?: string;
   category: Category;
   difficulty: Difficulty;
 };
@@ -27,7 +25,7 @@ export type TrueFalseQuestion = {
   type: "truefalse";
   statement: string;
   answer: boolean;
-  explanation: string;
+  explanation?: string;
   category: Category;
   difficulty: Difficulty;
 };
@@ -42,35 +40,7 @@ export type ShortAnswerQuestion = {
   difficulty: Difficulty;
 };
 
-// export type DragDropQuestion = {
-//   id: string;
-//   type: "dragdrop";
-//   prompt: string;
-//   items: string[];
-//   targets: string[];
-//   correctMatches: Record<string, string>;
-//   explanation: string;
-//   category: Category;
-//   difficulty: Difficulty;
-// };
-
-// export type ScenarioQuestion = {
-//   id: string;
-//   type: "scenario";
-//   scenario: string;
-//   options?: string[];
-//   correctOptionIndex?: number;
-//   acceptableAnswers?: string[];
-//   explanation: string;
-//   category: Category;
-//   difficulty: Difficulty;
-// };
-
-// Union Type
-
 export type Question =
   | MultipleChoiceQuestion
   | TrueFalseQuestion
   | ShortAnswerQuestion;
-// | DragDropQuestion
-// | ScenarioQuestion;

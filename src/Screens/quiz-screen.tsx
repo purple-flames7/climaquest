@@ -4,26 +4,71 @@ import { motion, AnimatePresence } from "framer-motion";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 
-import { useGame } from "../context";
-import type { Question } from "../types";
+import { useGameStore } from "../stores";
 import { isMCQ, isTrueFalse, isShortAnswer, sanitizeInput } from "../utils";
 
-import { AnswerOptions, ShortAnswerInput, FeedbackBanner } from "../components";
-import { allQuestionsById } from "../data";
+// Reusable components
+import { ShortAnswerInput, FeedbackBanner } from "../components";
+
+// --- AnswerOptions inline for clarity ---
+function AnswerOptions({
+  options,
+  selected,
+  correctAnswer,
+  showFeedback,
+  onSelect,
+}: {
+  options: string[];
+  selected: string;
+  correctAnswer: string | boolean;
+  showFeedback: boolean;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {options.map((option) => {
+        const isSelected = selected === option;
+        const isCorrect = showFeedback && option === correctAnswer;
+        const isWrong = showFeedback && isSelected && option !== correctAnswer;
+
+        return (
+          <motion.button
+            key={option}
+            onClick={() => onSelect(option)}
+            disabled={showFeedback}
+            className={`w-full py-2 px-4 rounded-lg font-medium border-2
+              ${isCorrect ? "bg-green-500 text-white border-green-700" : ""}
+              ${isWrong ? "bg-red-500 text-white border-red-700" : ""}
+              ${
+                !showFeedback && isSelected
+                  ? "bg-emerald-400 text-white border-emerald-600"
+                  : ""
+              }
+              ${
+                !showFeedback && !isSelected
+                  ? "bg-white text-gray-800 border-gray-300"
+                  : ""
+              }
+              hover:opacity-90 transition`}
+          >
+            {option}
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function QuizScreen() {
   const navigate = useNavigate();
   const { width, height } = useWindowSize();
-
-  // Grab everything needed from context
   const {
-    currentLevelIndex,
     levels,
-    currentQuestionIndex,
+    currentLevelIndex,
     currentQuestion,
     answerQuestion,
     nextQuestion,
-  } = useGame();
+  } = useGameStore();
 
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -33,23 +78,18 @@ export default function QuizScreen() {
   const currentLevel = levels[currentLevelIndex];
   if (!currentLevel) return <div>Loading level...</div>;
 
-  const questions: Question[] = currentLevel.questionIDs
-    .map((id) => allQuestionsById[id])
-    .filter(Boolean);
+  const question = currentQuestion();
+  if (!question) return <div>Loading question...</div>;
 
-  if (questions.length === 0) return <div>No questions available</div>;
-
-  if (!currentQuestion) return <div>Loading question...</div>;
-
-  const answerOptions = isMCQ(currentQuestion)
-    ? currentQuestion.options
-    : isTrueFalse(currentQuestion)
+  const answerOptions = isMCQ(question)
+    ? question.options
+    : isTrueFalse(question)
     ? ["true", "false"]
     : [];
 
-  const questionText = isTrueFalse(currentQuestion)
-    ? currentQuestion.statement
-    : currentQuestion.question;
+  const questionText = isTrueFalse(question)
+    ? question.statement
+    : question.question;
 
   // --- Handle answer submission ---
   const handleSubmitAnswer = (answer: string) => {
@@ -57,13 +97,14 @@ export default function QuizScreen() {
 
     let correct = false;
 
-    if (isMCQ(currentQuestion)) {
+    if (isMCQ(question)) {
       correct =
-        currentQuestion.options[currentQuestion.correctOptionIndex] === answer;
-    } else if (isTrueFalse(currentQuestion)) {
-      correct = currentQuestion.answer === (answer === "true");
-    } else if (isShortAnswer(currentQuestion)) {
-      correct = currentQuestion.acceptableAnswers.some(
+        question.options[question.correctOptionIndex].trim().toLowerCase() ===
+        answer.trim().toLowerCase();
+    } else if (isTrueFalse(question)) {
+      correct = question.answer === (answer === "true");
+    } else if (isShortAnswer(question)) {
+      correct = question.acceptableAnswers.some(
         (ans) => sanitizeInput(ans) === sanitizeInput(answer)
       );
     }
@@ -77,26 +118,29 @@ export default function QuizScreen() {
       setTimeout(() => setShowConfetti(false), 1800);
     }
 
-    // Update global state via context
-    answerQuestion(currentQuestion.id, correct, answer, currentQuestion);
+    answerQuestion(question.id, correct, answer, question);
   };
 
-  // --- Handle Next Question ---
+  // --- Handle next question ---
   const handleNext = () => {
     setSelectedAnswer(null);
     setShowFeedback(false);
     setIsCorrect(null);
 
-    const isLastQuestion = currentQuestionIndex + 1 >= questions.length;
+    const currentIndex = currentLevel.questionIDs.indexOf(question.id);
+    const isLastQuestion = currentIndex + 1 >= currentLevel.questionIDs.length;
+
     if (!isLastQuestion) {
-      nextQuestion(); // <-- use context function
+      nextQuestion();
     } else {
       navigate("/results");
     }
   };
 
-  const totalQuestions = questions.length;
-  const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const progressPercent =
+    ((currentLevel.questionIDs.indexOf(question.id) + 1) /
+      currentLevel.questionIDs.length) *
+    100;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6">
@@ -110,10 +154,10 @@ export default function QuizScreen() {
       )}
 
       <motion.div
+        className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-xl flex flex-col space-y-6"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-xl relative flex flex-col space-y-6"
       >
         {/* Level Title & Progress */}
         <div>
@@ -132,7 +176,7 @@ export default function QuizScreen() {
         {/* Question */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentQuestion.id}
+            key={question.id}
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
@@ -148,12 +192,10 @@ export default function QuizScreen() {
                 options={answerOptions}
                 selected={selectedAnswer ?? ""}
                 correctAnswer={
-                  isMCQ(currentQuestion)
-                    ? currentQuestion.options[
-                        currentQuestion.correctOptionIndex
-                      ]
-                    : isTrueFalse(currentQuestion)
-                    ? currentQuestion.answer
+                  isMCQ(question)
+                    ? question.options[question.correctOptionIndex]
+                    : isTrueFalse(question)
+                    ? question.answer
                       ? "true"
                       : "false"
                     : ""
@@ -164,9 +206,9 @@ export default function QuizScreen() {
             )}
 
             {/* Short Answer */}
-            {isShortAnswer(currentQuestion) && (
+            {isShortAnswer(question) && (
               <ShortAnswerInput
-                correctAnswer={currentQuestion.acceptableAnswers[0]}
+                correctAnswer={question.acceptableAnswers[0]}
                 selectedAnswer={selectedAnswer ?? ""}
                 showFeedback={showFeedback}
                 onSubmit={handleSubmitAnswer}
@@ -177,7 +219,7 @@ export default function QuizScreen() {
             <FeedbackBanner
               correct={isCorrect ?? undefined}
               show={showFeedback}
-              explanation={currentQuestion.explanation}
+              explanation={question.explanation}
             />
 
             {/* Next Button */}
@@ -196,7 +238,8 @@ export default function QuizScreen() {
 
         {/* Footer Progress */}
         <div className="text-center text-gray-700 font-medium">
-          Question {currentQuestionIndex + 1} / {totalQuestions}
+          Question {currentLevel.questionIDs.indexOf(question.id) + 1} /{" "}
+          {currentLevel.questionIDs.length}
         </div>
       </motion.div>
     </div>
