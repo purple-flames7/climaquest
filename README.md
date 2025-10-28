@@ -18,3 +18,33 @@ Climaquest is an interactive, narrative-driven quiz and mini game platform desig
 - **Mini-Challenges:** Mini challenges with special rewards.
 - **Leaderboard:** Track progress and compare with peers.
 - **Accessibility:** Color-blind-friendly palette, text-to-speech, adjustable pace.
+
+---
+
+## Getting Started
+
+Follow these steps to run **CLimaQuest** locally.
+
+### Prerequisites
+
+Make sure you have:
+
+- **Node.js** `>= 18.x`
+- **npm** `>= 9.x`
+
+## Clone the repo
+
+git clone https://github.com/purple-flames7/climaquest.git
+
+## Go into project directory
+
+cd climaquest
+
+## Install dependencies
+
+npm install
+
+Start the development server: npm run dev
+
+Open your browser and visit:
+http://localhost:5173/
