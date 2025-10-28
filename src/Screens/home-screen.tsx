@@ -22,7 +22,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen text-center bg-gradient-to-b from-emerald-100 to-emerald-700 p-6">
       {/* Logo */}
       <motion.img
         src={logoIcon}
@@ -34,13 +34,10 @@ export default function HomeScreen() {
       />
 
       {/* Tagline */}
-      <motion.p
-        className="text-emerald-900 text-lg mb-8 max-w-md drop-shadow-sm"
-        initial={{ opacity: 0 }}
-        animate={logoLoaded ? { opacity: 1 } : {}}
-        transition={{ delay: 0.5, duration: 0.8 }}
-      >
-        Ready to play?
+      <motion.p className="text-emerald-900 text-lg mb-8 font-medium">
+        {tutorialCompleted
+          ? "Continue your climate journey"
+          : "Embark on your first quest"}
       </motion.p>
 
       {/* XP Progress Bar */}
@@ -74,7 +71,7 @@ export default function HomeScreen() {
           {tutorialCompleted ? "Continue Journey" : "Start Adventure"}
         </button>
 
-        <button className="bg-white/20 text-white font-medium py-3 rounded-xl hover:bg-white/30 transition-colors duration-200">
+        <button className="bg-emerald-50 text-emerald-800  font-medium py-3 rounded-xl hover:bg-emerald-100 transition-colors duration-200">
           View Rewards
         </button>
       </motion.div>

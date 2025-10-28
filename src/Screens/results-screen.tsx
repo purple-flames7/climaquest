@@ -18,7 +18,7 @@ export default function ResultsScreen() {
 
   const level = levels[currentLevelIndex];
 
-  // --- Compute results ---
+  // Compute results
   const levelAnswers = level
     ? answeredQuestions.filter((a) => level.questionIDs.includes(a.id))
     : [];
@@ -31,15 +31,15 @@ export default function ResultsScreen() {
     totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const isLastLevel = currentLevelIndex + 1 >= levels.length;
 
-  // --- Badge logic ---
+  //  Badge logic
   const earnedBadge =
     correctRatio === 100
       ? allBadges.find((b) => b.name === "Accuracy Ace")
       : null;
 
-  // --- Update stores once on mount ---
+  // Update stores once on mount
   useEffect(() => {
-    if (!level) return; // guard inside hook, not before
+    if (!level) return;
     addXP(xpEarned);
     markLevelCompleted(level.id);
     if (earnedBadge) addBadge(earnedBadge);
@@ -60,23 +60,24 @@ export default function ResultsScreen() {
     }
   };
 
-  // --- Navigation ---
+  // Navigation
   const handleNext = () => {
     if (!level) return;
 
     if (!isLastLevel) {
-      const nextLevelIndex = currentLevelIndex + 1;
-      selectLevel(nextLevelIndex);
-      const nextLevel = levels[nextLevelIndex];
-      navigate("/quiz", {
-        state: { level: nextLevel, questions: nextLevel.questionIDs },
+      navigate("/review", {
+        state: {
+          level,
+          levelIndex: currentLevelIndex,
+          questions: level.questionIDs,
+        },
       });
     } else {
       navigate("/progress-map");
     }
   };
 
-  // --- Fallback render ---
+  // Fallback render 
   if (!level) {
     return (
       <div className="flex items-center justify-center min-h-screen text-emerald-700">
@@ -155,7 +156,7 @@ export default function ResultsScreen() {
           onClick={handleNext}
           className="bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-emerald-800 transition-all"
         >
-          {isLastLevel ? "Back to Map" : "Next Level"}
+          {isLastLevel ? "Back to Map" : "Review Answers"}
         </motion.button>
       </motion.div>
     </div>

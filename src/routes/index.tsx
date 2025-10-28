@@ -10,7 +10,6 @@ const ProgressMap = lazy(() => import("../screens/progress-map-screen"));
 const QuizScreen = lazy(() => import("../screens/quiz-screen"));
 const ResultsScreen = lazy(() => import("../screens/results-screen"));
 const ReviewScreen = lazy(() => import("../screens/review-screen"));
-const RewardsScreen = lazy(() => import("../screens/rewards-screen"));
 
 export const AppRoutes = () => (
   <Suspense fallback={<PageLoader />}>
@@ -23,7 +22,6 @@ export const AppRoutes = () => (
         { path: RoutePaths.QUIZ, Component: QuizScreen },
         { path: RoutePaths.RESULTS, Component: ResultsScreen },
         { path: RoutePaths.REVIEW, Component: ReviewScreen },
-        { path: RoutePaths.REWARDS, Component: RewardsScreen },
       ].map(({ path, Component }) => (
         <Route
           key={path}

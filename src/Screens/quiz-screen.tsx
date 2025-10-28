@@ -10,7 +10,7 @@ import { isMCQ, isTrueFalse, isShortAnswer, sanitizeInput } from "../utils";
 // Reusable components
 import { ShortAnswerInput, FeedbackBanner } from "../components";
 
-// --- AnswerOptions inline for clarity ---
+// AnswerOptions inline for clarity
 function AnswerOptions({
   options,
   selected,
@@ -31,25 +31,32 @@ function AnswerOptions({
         const isCorrect = showFeedback && option === correctAnswer;
         const isWrong = showFeedback && isSelected && option !== correctAnswer;
 
+        const baseClasses =
+          "w-full py-3 px-4 rounded-xl font-medium border transition-all duration-300 ease-in-out shadow-sm";
+        let stateClasses = "";
+
+        if (isCorrect) {
+          stateClasses =
+            "bg-emerald-100 text-emerald-900 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]";
+        } else if (isWrong) {
+          stateClasses =
+            "bg-rose-100 text-rose-900 border-rose-300 shadow-[0_0_8px_rgba(244,63,94,0.25)]";
+        } else if (!showFeedback && isSelected) {
+          stateClasses =
+            "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100";
+        } else {
+          stateClasses =
+            "bg-white/80 text-gray-800 border-gray-200 hover:bg-emerald-50 hover:border-emerald-300";
+        }
+
         return (
           <motion.button
             key={option}
             onClick={() => onSelect(option)}
             disabled={showFeedback}
-            className={`w-full py-2 px-4 rounded-lg font-medium border-2
-              ${isCorrect ? "bg-green-500 text-white border-green-700" : ""}
-              ${isWrong ? "bg-red-500 text-white border-red-700" : ""}
-              ${
-                !showFeedback && isSelected
-                  ? "bg-emerald-400 text-white border-emerald-600"
-                  : ""
-              }
-              ${
-                !showFeedback && !isSelected
-                  ? "bg-white text-gray-800 border-gray-300"
-                  : ""
-              }
-              hover:opacity-90 transition`}
+            className={`${baseClasses} ${stateClasses}`}
+            whileHover={!showFeedback ? { scale: 1.02 } : {}}
+            whileTap={!showFeedback ? { scale: 0.98 } : {}}
           >
             {option}
           </motion.button>
@@ -91,7 +98,7 @@ export default function QuizScreen() {
     ? question.statement
     : question.question;
 
-  // --- Handle answer submission ---
+  //  Handle answer submission
   const handleSubmitAnswer = (answer: string) => {
     if (showFeedback) return;
 
@@ -121,7 +128,7 @@ export default function QuizScreen() {
     answerQuestion(question.id, correct, answer, question);
   };
 
-  // --- Handle next question ---
+  // Handle next question
   const handleNext = () => {
     setSelectedAnswer(null);
     setShowFeedback(false);

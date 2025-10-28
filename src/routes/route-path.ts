@@ -6,5 +6,4 @@ export const RoutePaths = {
   QUIZ: "/quiz",
   RESULTS: "/results",
   REVIEW: "/review",
-  REWARDS: "/rewards",
 };

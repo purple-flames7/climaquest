@@ -1,11 +1,18 @@
-// src/screens/ReviewScreen.tsx
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import { useGameStore } from "../stores";
+import { useProgressStore } from "../stores/progress-store";
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
-  const { answeredQuestions } = useGameStore();
+  const {
+    answeredQuestions,
+    currentLevelIndex,
+    retryLevel,
+    selectLevel,
+    levels,
+  } = useGameStore();
+  const { unlockedLevels } = useProgressStore();
 
   if (!answeredQuestions || answeredQuestions.length === 0) {
     return (
@@ -23,13 +30,47 @@ export default function ReviewScreen() {
     );
   }
 
+  // Filter only questions from the current level
+  const level = levels[currentLevelIndex];
+  const levelQuestionIds = level.questionIDs;
+
+  const levelAnsweredQuestions = answeredQuestions.filter((q) =>
+    levelQuestionIds.includes(q.id)
+  );
+
+  const isLastLevel = currentLevelIndex + 1 >= levels.length;
+
+  const handleRetryLevel = () => {
+    retryLevel(currentLevelIndex);
+    const level = levels[currentLevelIndex];
+    navigate("/quiz", { state: { level, questions: level.questionIDs } });
+  };
+
+  const handleNextLevel = () => {
+    if (isLastLevel) {
+      navigate("/progress-map");
+      return;
+    }
+    const nextIndex = currentLevelIndex + 1;
+    selectLevel(nextIndex);
+    const nextLevel = levels[nextIndex];
+    navigate("/quiz", {
+      state: { level: nextLevel, questions: nextLevel.questionIDs },
+    });
+  };
+
+  const handleProgressMap = () => {
+    navigate("/progress-map");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-teal-100 p-6">
       <div className="max-w-3xl mx-auto bg-white/90 rounded-3xl shadow-lg p-8 space-y-6">
         <h1 className="text-3xl font-bold text-emerald-700 text-center mb-6">
           Review Your Answers
         </h1>
-        {answeredQuestions.map((q, index) => (
+
+        {levelAnsweredQuestions.map((q, index) => (
           <motion.div
             key={q.id}
             initial={{ opacity: 0, y: 15 }}
@@ -89,19 +130,35 @@ export default function ReviewScreen() {
                 q.correct ? "text-emerald-600" : "text-red-600"
               }`}
             >
-              {q.correct ? " Correct" : " Incorrect"}
+              {q.correct ? "Correct" : "Incorrect"}
             </p>
           </motion.div>
         ))}
 
-        <div className="flex justify-center mt-8">
+        {/* Navigation buttons */}
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
           <motion.button
-            onClick={() => navigate("/rewards")}
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
-            className="bg-green-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:bg-green-800 transition-all"
+            onClick={handleNextLevel}
+            className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-emerald-700 transition-all"
           >
-            View Rewards
+            {isLastLevel ? "Finish Journey" : "Next Level"}
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleRetryLevel}
+            className="bg-yellow-500 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-yellow-600 transition-all"
+          >
+            Retry Level
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleProgressMap}
+            className="bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-gray-800 transition-all"
+          >
+            Progress Map
           </motion.button>
         </div>
       </div>
