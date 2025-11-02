@@ -1,4 +1,3 @@
-// src/store/user-store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User, Achievement, Badge, UserProgress } from "../types";
@@ -20,20 +19,20 @@ interface UserStore {
 }
 
 export const useUserStore = create<UserStore>()(
-  persist(
-    (set, get) => ({
+  persist<UserStore>(
+    (set, get): UserStore => ({
       user: null,
 
-      setUser(user) {
+      setUser(user: User): void {
         set({ user });
       },
 
-      clearUser() {
+      clearUser(): void {
         set({ user: null });
       },
 
-      addXP(amount) {
-        set((state) => {
+      addXP(amount: number): void {
+        set((state): Partial<UserStore> => {
           if (!state.user) return state;
           return {
             user: {
@@ -44,29 +43,21 @@ export const useUserStore = create<UserStore>()(
         });
       },
 
-      addBadge(badge) {
-        set((state) => {
+      addBadge(badge: Badge): void {
+        set((state): Partial<UserStore> => {
           if (!state.user) return state;
-
-          // Ensure badges array exists
           const badges: Badge[] = state.user.badges ?? [];
-
-          // Prevent duplicates
           if (badges.some((b) => b.id === badge.id)) return state;
-
           return {
             user: { ...state.user, badges: [...badges, badge] },
           };
         });
       },
 
-      unlockAchievement(achievement) {
-        set((state) => {
+      unlockAchievement(achievement: Achievement): void {
+        set((state): Partial<UserStore> => {
           if (!state.user) return state;
-
           const achievements: Achievement[] = state.user.achievements ?? [];
-
-          // Prevent duplicates
           if (achievements.some((a) => a.id === achievement.id)) return state;
 
           return {
@@ -81,12 +72,17 @@ export const useUserStore = create<UserStore>()(
         });
       },
 
-      updateProgress(levelId, questionIds, xpEarned, completed = false) {
-        set((state) => {
+      updateProgress(
+        levelId: number,
+        questionIds: string[],
+        xpEarned: number,
+        completed: boolean = false
+      ): void {
+        set((state): Partial<UserStore> => {
           if (!state.user) return state;
 
           const progress: UserProgress[] = [...(state.user.progress ?? [])];
-          const existingIndex = progress.findIndex(
+          const existingIndex: number = progress.findIndex(
             (p) => p.levelId === levelId
           );
 
@@ -117,8 +113,8 @@ export const useUserStore = create<UserStore>()(
         });
       },
 
-      resetUserProgress() {
-        set((state) => {
+      resetUserProgress(): void {
+        set((state): Partial<UserStore> => {
           if (!state.user) return state;
           return {
             user: {
@@ -135,7 +131,7 @@ export const useUserStore = create<UserStore>()(
     {
       name: "climaquest-user",
       version: 4,
-      migrate: (persistedState: any, _version: number) => ({
+      migrate: (persistedState: any): UserStore => ({
         ...persistedState,
         user: persistedState?.user ?? null,
       }),

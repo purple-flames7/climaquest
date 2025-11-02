@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import { useGameStore } from "../stores";
-import { useProgressStore } from "../stores/progress-store";
+import { useGameStore, useProgressStore } from "../stores";
 
 export default function ReviewScreen() {
   const navigate = useNavigate();

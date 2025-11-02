@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
-import { useGameStore } from "../stores/game-store";
-import { useProgressStore } from "../stores/progress-store";
+import { useGameStore, useProgressStore } from "../stores";
 
 export default function ProgressMap() {
   const { levels, currentLevelIndex, selectLevel } = useGameStore();

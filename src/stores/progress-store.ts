@@ -1,4 +1,3 @@
-// src/store/progress-store.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Level } from "../types";
@@ -17,16 +16,16 @@ interface ProgressStore {
 }
 
 export const useProgressStore = create<ProgressStore>()(
-  persist(
-    (set, get) => ({
+  persist<ProgressStore>(
+    (set, get): ProgressStore => ({
       unlockedLevels: [1],
       completedLevels: [],
       totalLevels: 30,
       levels: [],
 
-      setLevels(levels) {
+      setLevels(levels: Level[]): void {
         const { unlockedLevels, completedLevels } = get();
-        const updatedLevels = levels.map((lvl) => ({
+        const updatedLevels: Level[] = levels.map((lvl) => ({
           ...lvl,
           unlocked: unlockedLevels.includes(lvl.id),
           completed: completedLevels.includes(lvl.id),
@@ -34,7 +33,7 @@ export const useProgressStore = create<ProgressStore>()(
         set({ levels: updatedLevels, totalLevels: levels.length });
       },
 
-      unlockLevel(levelId) {
+      unlockLevel(levelId: number): void {
         const { unlockedLevels } = get();
         if (!unlockedLevels.includes(levelId)) {
           set({
@@ -46,7 +45,7 @@ export const useProgressStore = create<ProgressStore>()(
         }
       },
 
-      markLevelCompleted(levelId) {
+      markLevelCompleted(levelId: number): void {
         const { completedLevels, totalLevels } = get();
         if (!completedLevels.includes(levelId)) {
           set({
@@ -57,21 +56,21 @@ export const useProgressStore = create<ProgressStore>()(
           });
         }
 
-        const nextLevel = levelId + 1;
+        const nextLevel: number = levelId + 1;
         if (nextLevel <= totalLevels) {
           get().unlockLevel(nextLevel);
         }
       },
 
-      isLevelUnlocked(levelId) {
+      isLevelUnlocked(levelId: number): boolean {
         return get().unlockedLevels.includes(levelId);
       },
 
-      isLevelCompleted(levelId) {
+      isLevelCompleted(levelId: number): boolean {
         return get().completedLevels.includes(levelId);
       },
 
-      resetProgress() {
+      resetProgress(): void {
         set({
           unlockedLevels: [1],
           completedLevels: [],

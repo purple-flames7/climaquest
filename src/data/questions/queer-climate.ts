@@ -1,5 +1,5 @@
 // src/data/queerClimateQuestions.ts
-import type { Question } from "../../types/question";
+import type { Question } from "../../types";
 
 export const queerClimateQuestions: Question[] = [
   // EASY

@@ -1,7 +1,8 @@
+import type { AnswerValue } from "./index";
+
 export interface ReviewEntry {
   questionId: string;
-  // accept boolean for true/false and string for others
-  userAnswer: string | boolean;
+  userAnswer: Exclude<AnswerValue, null>;
   correct: boolean;
   levelId: string;
 }

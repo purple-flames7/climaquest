@@ -1,7 +1,14 @@
-// src/hooks/useLocalStorage.ts
 import { useState } from "react";
 
-export const useLocalStorage = <T>(key: string, initialValue: T) => {
+/**
+ * A typed wrapper for localStorage with React state synchronization.
+ * @returns A tuple of [storedValue, setValue]
+ */
+
+export const useLocalStorage = <T>(
+  key: string,
+  initialValue: T
+): readonly [T, (value: T | ((val: T) => T)) => void] => {
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") return initialValue;
     try {
@@ -12,7 +19,7 @@ export const useLocalStorage = <T>(key: string, initialValue: T) => {
     }
   });
 
-  const setValue = (value: T | ((val: T) => T)) => {
+  const setValue = (value: T | ((val: T) => T)): void => {
     try {
       const valueToStore =
         value instanceof Function ? value(storedValue) : value;

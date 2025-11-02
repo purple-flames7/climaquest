@@ -1,4 +1,3 @@
-// src/store/game-store.ts
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import { calculateXP } from "../utils";
@@ -42,7 +41,7 @@ export interface GameStore {
   nextQuestion: () => void;
 }
 
-const gameStoreCreator: StateCreator<GameStore> = (set, get) => ({
+const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
   initialLevels: [],
   levels: [],
   currentLevelIndex: 0,
@@ -55,17 +54,16 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get) => ({
   user: null,
   tutorialCompleted: false,
 
-  setLevels(levels) {
+  setLevels(levels: Level): void {
     set({ initialLevels: levels, levels });
-
     useProgressStore.getState().setLevels(levels);
   },
 
-  selectLevel(index) {
+  selectLevel(index: number): void {
     set({ currentLevelIndex: index, currentQuestionIndex: 0 });
   },
 
-  currentQuestion() {
+  currentQuestion(): Question | null {
     const state = get();
     const level = state.levels[state.currentLevelIndex];
     if (!level) return null;
@@ -73,14 +71,19 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get) => ({
     return questionId ? allQuestionsById[questionId] : null;
   },
 
-  answerQuestion(questionId, correct, userAnswer, questionData) {
+  answerQuestion(
+    questionId: string,
+    correct: boolean,
+    userAnswer: string | boolean | null,
+    questionData?: Question
+  ): void {
     const state = get();
     const level = state.levels[state.currentLevelIndex];
     if (!level) return;
 
     const baseXP = level.xpReward ?? 10;
     const difficulty: Difficulty = questionData?.difficulty ?? "easy";
-    const gainedXP = calculateXP(baseXP, difficulty, correct);
+    const gainedXP: number = calculateXP(baseXP, difficulty, correct);
 
     let questionText = "";
     let correctAnswer: string | boolean | null = null;
@@ -113,18 +116,20 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get) => ({
       options: questionData?.type === "mcq" ? questionData.options : undefined,
     };
 
-    set((s) => ({
-      answeredQuestions: [...s.answeredQuestions, answered],
-      completedQuestions: [...new Set([...s.completedQuestions, questionId])],
-      xp: s.xp + gainedXP,
-      recentXP: gainedXP,
-      user: s.user
-        ? { ...s.user, totalXp: (s.user.totalXp ?? 0) + gainedXP }
-        : null,
-    }));
+    set(
+      (s): Partial<GameStore> => ({
+        answeredQuestions: [...s.answeredQuestions, answered],
+        completedQuestions: [...new Set([...s.completedQuestions, questionId])],
+        xp: s.xp + gainedXP,
+        recentXP: gainedXP,
+        user: s.user
+          ? { ...s.user, totalXp: (s.user.totalXp ?? 0) + gainedXP }
+          : null,
+      })
+    );
   },
 
-  resetGame() {
+  resetGame(): void {
     const initial = get().initialLevels;
     set({
       levels: initial,
@@ -138,9 +143,9 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get) => ({
     });
   },
 
-  retryLevel(index) {
+  retryLevel(index: number): void {
     const s = get();
-    const levelQuestions = s.levels[index]?.questionIDs ?? [];
+    const levelQuestions: string[] = s.levels[index]?.questionIDs ?? [];
     set({
       currentLevelIndex: index,
       currentQuestionIndex: 0,
@@ -153,16 +158,16 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get) => ({
     });
   },
 
-  setUser(user) {
+  setUser(user: User): void {
     set({ user });
   },
 
-  completeTutorial() {
+  completeTutorial(): void {
     set({ tutorialCompleted: true });
   },
 
-  nextQuestion() {
-    set((s) => {
+  nextQuestion(): void {
+    set((s): Partial<GameStore> => {
       const level = s.levels[s.currentLevelIndex];
       if (!level) return s;
 
@@ -170,9 +175,8 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get) => ({
       const nextIndex = s.currentQuestionIndex + 1;
 
       if (nextIndex >= total) {
-        // Level completed → update progress-store
         useProgressStore.getState().markLevelCompleted(level.id);
-        return s; // stay on last question until navigation
+        return s;
       }
 
       return { currentQuestionIndex: nextIndex };

@@ -1,4 +1,4 @@
-// src/hooks/useSwipe.ts
+// src/hooks/use-swipe.ts
 import { useEffect, useRef, useCallback } from "react";
 
 interface SwipeOptions {
@@ -6,26 +6,28 @@ interface SwipeOptions {
   onSwipeRight?: () => void;
   onSwipeUp?: () => void;
   onSwipeDown?: () => void;
-  threshold?: number; // minimum distance in px
+  threshold?: number;
 }
 
+/**
+ * Detects swipe gestures on touch devices and triggers corresponding callbacks.
+ */
 export const useSwipe = ({
   onSwipeLeft,
   onSwipeRight,
   onSwipeUp,
   onSwipeDown,
   threshold = 50,
-}: SwipeOptions) => {
+}: SwipeOptions): void => {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
-  // Handlers wrapped in useCallback to stabilize references
-  const handleTouchStart = useCallback((e: TouchEvent) => {
+  const handleTouchStart = useCallback((e: TouchEvent): void => {
     const touch = e.touches[0];
     touchStart.current = { x: touch.clientX, y: touch.clientY };
   }, []);
 
   const handleTouchEnd = useCallback(
-    (e: TouchEvent) => {
+    (e: TouchEvent): void => {
       if (!touchStart.current) return;
 
       const touch = e.changedTouches[0];
@@ -45,11 +47,11 @@ export const useSwipe = ({
     [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold]
   );
 
-  useEffect(() => {
+  useEffect((): (() => void) => {
     window.addEventListener("touchstart", handleTouchStart);
     window.addEventListener("touchend", handleTouchEnd);
 
-    return () => {
+    return (): void => {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
     };
