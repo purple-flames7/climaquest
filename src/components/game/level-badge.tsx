@@ -1,6 +1,7 @@
 import { Star, Lock } from "lucide-react";
+import type { FC } from "react";
 
-interface LevelBadgeProps {
+export interface LevelBadgeProps {
   levelNumber: number;
   unlocked: boolean;
   completed: boolean;
@@ -8,28 +9,37 @@ interface LevelBadgeProps {
   onClick?: () => void;
 }
 
-export const LevelBadge: React.FC<LevelBadgeProps> = ({
+export const LevelBadge: FC<LevelBadgeProps> = ({
   levelNumber,
   unlocked,
   completed,
   xpReward,
   onClick,
 }) => {
+  const handleClick = (): void => {
+    if (unlocked && onClick) onClick();
+  };
+
   return (
-    <div
-      onClick={unlocked && onClick ? onClick : undefined}
-      className={`flex flex-col items-center justify-center p-4 rounded-2xl shadow-lg cursor-pointer
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={!unlocked}
+      aria-label={`Level ${levelNumber}${completed ? " (completed)" : ""}`}
+      className={`flex flex-col items-center justify-center p-4 rounded-2xl shadow-lg transition-transform duration-200 focus-visible:ring-2 focus-visible:ring-primary
         ${
           unlocked
-            ? "bg-gradient-to-br from-green-400 to-blue-500"
-            : "bg-gray-300 cursor-not-allowed"
+            ? "bg-primary text-white hover:scale-105"
+            : "bg-muted text-text-muted cursor-not-allowed"
         }
-        ${completed ? "ring-4 ring-yellow-400" : ""}
+        ${completed ? "ring-4 ring-accent" : ""}
       `}
     >
-      {unlocked ? <Star size={24} /> : <Lock size={24} />}
+      {unlocked ? <Star className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
       <span className="font-bold mt-2">Level {levelNumber}</span>
-      {xpReward && <span className="text-sm mt-1">{xpReward} XP</span>}
-    </div>
+      {xpReward && (
+        <span className="text-sm opacity-90 mt-1">{xpReward} XP</span>
+      )}
+    </button>
   );
 };

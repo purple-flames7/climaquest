@@ -25,8 +25,8 @@ export const AnswerOptions = memo(
 
     return (
       <div
-        className="flex flex-col gap-3 w-full max-w-md mx-auto"
-        role="group"
+        className="flex flex-col gap-3 w-full max-w-md mx-auto spacing-inner"
+        role="radiogroup"
         aria-label="Answer options"
       >
         {options.map((opt) => {
@@ -39,38 +39,26 @@ export const AnswerOptions = memo(
             normalizedOpt !== normalizedCorrect;
           const isSelected = normalizedSelected === normalizedOpt;
 
-          const baseClasses =
-            "transition-all duration-300 ease-in-out transform text-base font-medium rounded-xl py-3 px-4 w-full border focus:outline-none focus:ring-2";
-          const defaultClasses =
-            "bg-white hover:bg-gray-100 text-gray-800 border-gray-200";
-          const selectedClasses =
-            "bg-blue-500 text-white hover:bg-blue-600 border-blue-500";
-          const correctClasses =
-            "bg-green-500 text-white border-green-600 scale-105";
-          const wrongClasses = "bg-red-500 text-white border-red-600 scale-95";
-
-          const buttonClasses = [
-            baseClasses,
-            isCorrect
-              ? correctClasses
-              : isWrong
-              ? wrongClasses
-              : isSelected
-              ? selectedClasses
-              : defaultClasses,
-          ].join(" ");
+          const variant = isCorrect
+            ? "bg-green-600 text-white hover:bg-green-700"
+            : isWrong
+            ? "bg-red-600 text-white hover:bg-red-700"
+            : isSelected
+            ? "bg-primary text-white hover:bg-primary-hover"
+            : "bg-surface text-text-base border border-gray-300 hover:bg-secondary";
 
           return (
             <Button
               key={opt}
-              label={opt}
               onClick={() => onSelect(normalizedOpt)}
               disabled={showFeedback || isChecking}
               aria-pressed={isSelected}
               aria-label={`Answer option: ${opt}`}
               data-testid={`answer-option-${normalizedOpt}`}
-              className={buttonClasses}
-            />
+              className={`btn w-full py-3 px-4 text-base font-medium rounded-xl transition-all duration-300 transform hover:scale-[1.02] focus-visible:ring-primary ${variant}`}
+            >
+              {opt}
+            </Button>
           );
         })}
       </div>

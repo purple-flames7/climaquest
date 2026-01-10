@@ -1,8 +1,9 @@
 import React from "react";
-import { Fallback } from "./ui/fallback";
+import { Fallback } from "./ui";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
+  onReset?: () => void;
 }
 
 interface ErrorBoundaryState {
@@ -29,17 +30,23 @@ export class ErrorBoundary extends React.Component<
 
   handleRetry = () => {
     this.setState({ hasError: false, error: undefined });
-    window.location.reload();
+    if (this.props.onReset) {
+      this.props.onReset();
+    } else {
+      window.location.reload();
+    }
   };
 
   render() {
     if (this.state.hasError) {
       return (
-        <Fallback
-          type="error"
-          message={this.state.error?.message ?? "Something went wrong."}
-          onRetry={this.handleRetry}
-        />
+        <div role="alert" aria-live="assertive">
+          <Fallback
+            type="error"
+            message={this.state.error?.message ?? "Something went wrong."}
+            onRetry={this.handleRetry}
+          />
+        </div>
       );
     }
 

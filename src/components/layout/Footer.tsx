@@ -1,12 +1,15 @@
 interface FooterProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
 }
 
 export const Footer: React.FC<FooterProps> = ({ children, className }) => {
   return (
-    <div className={`w-full p-4 flex justify-center items-center ${className}`}>
+    <footer
+      className={`w-full flex items-center justify-center border-t border-muted/30 text-text-muted text-sm p-4 mt-auto ${className}`}
+      role="contentinfo"
+    >
       {children}
-    </div>
+    </footer>
   );
 };

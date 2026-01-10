@@ -1,1 +1,157 @@
 @import "tailwindcss";
+
+/* ===============================
+   THEME TOKENS
+   =============================== */
+@theme {
+  /* Colors */
+  --color-primary: #1c8a5f;
+  --color-primary-hover: #15724e;
+  --color-primary-muted: #a9e0ca;
+
+  --color-secondary: #effbf7;
+  --color-accent: #36c692;
+  --color-accent-hover: #2ea87b;
+
+  --color-surface: #ffffff;
+  --color-surface-alt: #f9fafb;
+
+  --color-text-base: #1a1a1a;
+  --color-text-muted: #555555;
+  --color-text-inverted: #ffffff;
+
+  /* Typography & Radius */
+  --font-sans: "Inter", "Poppins", "system-ui", sans-serif;
+  --radius-base: 0.75rem;
+  --radius-xl: 1.25rem;
+
+  /* Shadows & Overlays */
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 6px 20px rgba(0, 0, 0, 0.12);
+  --overlay-dark: rgba(0, 0, 0, 0.4);
+  --overlay-light: rgba(255, 255, 255, 0.3);
+}
+
+/* ===============================
+   BASE STYLES
+   =============================== */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-text-base);
+    background: linear-gradient(to bottom, #f8fffb, #effbf7);
+    @apply antialiased leading-relaxed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold text-text-base;
+  }
+}
+
+/*COMPONENTS*/
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-hover;
+  }
+
+  .btn-secondary {
+    @apply bg-surface text-text-base border border-primary hover:bg-secondary;
+  }
+
+  .btn-icon {
+    @apply p-2 text-text-base hover:bg-primary-muted rounded-full focus-visible:ring-primary;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-surface rounded-2xl shadow-lg p-4;
+  }
+
+  /* Section Headings */
+  .section-heading {
+    @apply mb-4;
+  }
+
+  .section-heading h2 {
+    @apply text-2xl font-bold text-text-base;
+  }
+
+  .section-heading p {
+    @apply text-text-muted;
+  }
+
+  /* Progress Bars */
+  .progress-track {
+    @apply bg-primary-muted rounded-full overflow-hidden;
+  }
+
+  .progress-bar {
+    @apply bg-primary h-full transition-all duration-300;
+  }
+
+  /* Readability helpers */
+  .text-overlay-dark {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  .text-overlay-light {
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  }
+
+  .overlay-dark {
+    background-color: var(--overlay-dark);
+  }
+
+  .overlay-light {
+    background-color: var(--overlay-light);
+  }
+
+  /* Spacing Consistency */
+  .spacing-section {
+    @apply px-4 py-8 md:px-6 md:py-12;
+  }
+
+  .spacing-card {
+    @apply p-4 md:p-6;
+  }
+
+  .spacing-inner {
+    @apply p-2 md:p-4;
+  }
+}
+
+/* ACCESSIBILITY & MOTION*/
+:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-primary: #006b47;
+    --color-accent: #00996a;
+    --color-text-base: #000;
+  }
+
+  .btn-primary {
+    @apply ring-2 ring-offset-2 ring-primary;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

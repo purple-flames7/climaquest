@@ -1,6 +1,11 @@
-// src/data/badges.ts
 import type { Badge } from "../types";
 
+/**
+ * All badges in CLIMAQUEST.
+ *
+ * `id` should be unique.
+ * `icon` references the UI icon name or asset.
+ */
 export const badges: Badge[] = [
   {
     id: "B001",

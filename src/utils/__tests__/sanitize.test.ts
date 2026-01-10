@@ -1,29 +1,29 @@
 import { describe, it, expect } from "vitest";
 import { sanitizeInput } from "../sanitize";
 
-describe("sanitizeInput", () => {
-  it("should trim and lowercase text", () => {
+describe("sanitizeInput utility", () => {
+  it("trims whitespace and converts text to lowercase", () => {
     expect(sanitizeInput("  Hello WORLD  ")).toBe("hello world");
   });
 
-  it("should collapse multiple spaces into one", () => {
+  it("collapses multiple spaces into a single space", () => {
     expect(sanitizeInput("Hello     there")).toBe("hello there");
   });
 
-  it("should remove accents and diacritics", () => {
+  it("removes accents and diacritics", () => {
     expect(sanitizeInput("Café")).toBe("cafe");
     expect(sanitizeInput("Niño")).toBe("nino");
   });
 
-  it("should remove potential HTML or script tags", () => {
+  it("removes potential HTML and script tags", () => {
     expect(sanitizeInput("<script>alert('x')</script>Test")).toBe("test");
   });
 
-  it("should remove special characters except basic punctuation", () => {
+  it("removes special characters except alphanumeric and spaces", () => {
     expect(sanitizeInput("Climate! Change??")).toBe("climate change");
   });
 
-  it("should handle empty or whitespace-only input", () => {
+  it("handles empty or whitespace-only input gracefully", () => {
     expect(sanitizeInput("   ")).toBe("");
   });
 });

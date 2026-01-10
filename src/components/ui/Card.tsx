@@ -11,15 +11,18 @@ export const Card: React.FC<CardProps> = ({
   children,
   shadow = true,
   rounded = true,
-  className,
+  className = "",
 }) => {
   return (
     <div
-      className={`bg-white p-4 ${shadow ? "shadow-lg" : ""} ${
+      className={`card ${shadow ? "shadow-lg" : "shadow-none"} ${
         rounded ? "rounded-2xl" : ""
       } ${className}`}
+      role="group"
     >
-      {title && <h3 className="text-lg font-bold mb-2">{title}</h3>}
+      {title && (
+        <h3 className="text-lg font-bold mb-2 text-text-strong">{title}</h3>
+      )}
       {children}
     </div>
   );

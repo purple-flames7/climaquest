@@ -1,15 +1,60 @@
 // src/types/level.ts
-import type { Difficulty } from "./question";
+import type { Difficulty, Category } from "./question";
 
+/**
+ * Represents a playable level in the game.
+ * This type should stay aligned with the Level-related schemas.
+ */
 export interface Level {
-  id: number; // Unique level ID (use numeric index for level ordering)
-  title: string; // Display name for the level
+  /**
+   * Unique numeric identifier for the level.
+   * Used for ordering and progression logic.
+   */
+  id: number;
+
+  /**
+   * Display name shown to the user.
+   */
+  title: string;
+
+  /**
+   * Optional description or narrative context for the level.
+   */
   description?: string;
-  completed: boolean; // Has the player completed it?
-  unlocked: boolean; // Is the level available to the player?
+
+  /**
+   * Whether the player has completed this level.
+   */
+  completed: boolean;
+
+  /**
+   * Whether the level is currently available to the player.
+   */
+  unlocked: boolean;
+
+  /**
+   * Optional icon identifier or asset reference.
+   */
   icon?: string;
-  questionIDs: string[]; // array of question ids (strings like "CS-E1")
-  categories: string[];
-  difficulty: Difficulty; // Difficulty for all questions in this level (if applicable)
-  xpReward: number; // XP awarded for completing the level
+
+  /**
+   * IDs of questions included in this level.
+   * The actual question content is resolved elsewhere.
+   */
+  questionIDs: string[];
+
+  /**
+   * Categories represented in this level.
+   */
+  categories: Category[];
+
+  /**
+   * Difficulty applied to the level as a whole.
+   */
+  difficulty: Difficulty;
+
+  /**
+   * XP awarded upon completing the level.
+   */
+  xpReward: number;
 }

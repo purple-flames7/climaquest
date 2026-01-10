@@ -1,80 +1,82 @@
-import { useState, useEffect } from "react";
-import { useGameStore } from "../stores";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
-import logoIcon from "../assets/icons/icon-text-logo.webp";
 
-export default function HomeScreen() {
+import logoText from "../assets/icons/icon-text-logo.webp";
+import { useGameStore } from "../stores";
+import { XPBar } from "../components/game";
+
+export default function HomeScreen(): JSX.Element {
   const navigate = useNavigate();
-  const { tutorialCompleted, xp } = useGameStore();
-  const [logoLoaded, setLogoLoaded] = useState(false);
 
-  // Programmatically preload the home screen logo
+  // Global game state
+  const { tutorialCompleted, xp } = useGameStore();
+
+  // Local UI State
+  /* Ensures animations only run once the logo asset is fully loaded to prevent interferences on slow connections */
+  const [logoLoaded, setLogoLoaded] = useState<boolean>(false);
+
+  // Effects
+  // Preload logo so animations are synched
   useEffect(() => {
     const img = new Image();
-    img.src = logoIcon;
+    img.src = logoText;
     img.onload = () => setLogoLoaded(true);
   }, []);
 
-  const handlePlay = () => {
+  const handlePlay = (): void => {
     if (tutorialCompleted) navigate("/progress-map");
     else navigate("/tutorial");
   };
 
+  const xpForLevel = 300;
+  const xpPercent = Math.min(100, (xp / xpForLevel) * 100);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center bg-gradient-to-b from-emerald-100 to-emerald-700 p-6">
-      {/* Logo */}
+    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-emerald-100 to-teal-200 text-center">
       <motion.img
-        src={logoIcon}
-        alt="ClimaQuest Logo"
-        className="w-56 h-auto mb-6"
+        src={logoText}
+        alt="ClimaQuest"
+        className="w-56 mb-6"
         initial={{ opacity: 0, y: -20 }}
         animate={logoLoaded ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 1 }}
+        transition={{ duration: 0.9 }}
       />
 
-      {/* Tagline */}
-      <motion.p className="text-emerald-900 text-lg mb-8 font-medium">
+      <motion.p
+        className="text-lg mb-6 text-gray-700"
+        initial={{ opacity: 0 }}
+        animate={logoLoaded ? { opacity: 1 } : {}}
+      >
         {tutorialCompleted
           ? "Continue your climate journey"
           : "Embark on your first quest"}
       </motion.p>
 
-      {/* XP Progress Bar */}
-      <motion.div
-        className="w-64 bg-white/20 rounded-full h-4 overflow-hidden mb-8"
-        initial={{ opacity: 0 }}
-        animate={logoLoaded ? { opacity: 1 } : {}}
-        transition={{ delay: 0.7, duration: 0.8 }}
-      >
-        <motion.div
-          className="h-full bg-gradient-to-r from-lime-400 to-emerald-500"
-          initial={{ width: "0%" }}
-          animate={
-            logoLoaded ? { width: `${Math.min((xp / 300) * 100, 100)}%` } : {}
-          }
-          transition={{ delay: 1, duration: 1 }}
-        />
-      </motion.div>
+      <div className="w-64 mb-8">
+        <XPBar progress={xpPercent} height="h-3" />
+      </div>
 
-      {/* Buttons */}
       <motion.div
         className="flex flex-col gap-4 w-64"
         initial={{ opacity: 0, y: 10 }}
         animate={logoLoaded ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 1.2, duration: 0.8 }}
+        transition={{ delay: 0.2 }}
       >
-        <button
+        <motion.button
           onClick={handlePlay}
-          className="bg-gradient-to-r from-lime-500 to-emerald-600 text-white font-semibold py-3 rounded-xl shadow-md hover:scale-105 transition-transform duration-200"
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-semibold py-4 rounded-2xl shadow-lg text-lg"
         >
-          {tutorialCompleted ? "Continue Journey" : "Start Adventure"}
-        </button>
+          Continue Journey
+        </motion.button>
 
-        <button className="bg-emerald-50 text-emerald-800  font-medium py-3 rounded-xl hover:bg-emerald-100 transition-colors duration-200">
-          View Rewards
+        <button
+          onClick={() => navigate("/progress-map")}
+          className="text-emerald-700 font-medium underline underline-offset-4 hover:text-emerald-800"
+        >
+          View Journey Map
         </button>
       </motion.div>
-    </div>
+    </main>
   );
 }

@@ -8,15 +8,17 @@ interface ScreenWrapperProps {
 
 export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
   children,
-  className,
+  className = "",
   gradient,
 }) => {
   return (
     <GradientBackground
       gradient={gradient}
-      className={`min-h-screen flex flex-col items-center justify-start p-4 ${className}`}
+      className={`min-h-screen flex flex-col items-center justify-start px-4 py-8 md:px-8 text-text-base ${className}`}
     >
-      {children}
+      <main role="main" className="w-full max-w-3xl flex-1 flex flex-col gap-6">
+        {children}
+      </main>
     </GradientBackground>
   );
 };

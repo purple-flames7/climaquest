@@ -1,3 +1,8 @@
+/**
+ * Centralized route path definitions.
+ * Prevents hard coded strings across the app.
+ */
+
 export const RoutePaths = {
   SPLASH: "/",
   HOME: "/home",
@@ -6,4 +11,4 @@ export const RoutePaths = {
   QUIZ: "/quiz",
   RESULTS: "/results",
   REVIEW: "/review",
-};
+} as const;

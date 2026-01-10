@@ -12,7 +12,13 @@ import type {
 import { allQuestionsById } from "../data";
 import { useProgressStore } from "./progress-store";
 
+/**
+ * The central game store interface.
+ * Tracks both mutable game state and provides actions
+ * for progression, user interactions, and tutorial completion.
+ */
 export interface GameStore {
+  // --- Core state ---
   initialLevels: Level[];
   levels: Level[];
   currentLevelIndex: number;
@@ -25,6 +31,7 @@ export interface GameStore {
   user: User | null;
   tutorialCompleted: boolean;
 
+  // --- Actions ---
   setLevels: (levels: Level[]) => void;
   selectLevel: (index: number) => void;
   currentQuestion: () => Question | null;
@@ -41,6 +48,10 @@ export interface GameStore {
   nextQuestion: () => void;
 }
 
+/**
+ * Core Zustand state creator.
+ * Encapsulates all game logic and progression rules.
+ */
 const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
   initialLevels: [],
   levels: [],
@@ -54,15 +65,24 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
   user: null,
   tutorialCompleted: false,
 
-  setLevels(levels: Level): void {
+  /**
+   * Initializes the store with a set of levels.
+   * Also updates the progress store to keep persistence in sync.
+   */
+  setLevels(levels: Level[]): void {
     set({ initialLevels: levels, levels });
     useProgressStore.getState().setLevels(levels);
   },
 
+  /** Sets the current level and resets question index */
   selectLevel(index: number): void {
     set({ currentLevelIndex: index, currentQuestionIndex: 0 });
   },
 
+  /**
+   * Returns the current question object, or null if invalid.
+   * Resolves the question from allQuestionsById using the current level and question index.
+   */
   currentQuestion(): Question | null {
     const state = get();
     const level = state.levels[state.currentLevelIndex];
@@ -71,6 +91,13 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
     return questionId ? allQuestionsById[questionId] : null;
   },
 
+  /**
+   * Handles the logic when a question is answered.
+   * - Calculates XP
+   * - Records the answered question
+   * - Updates completed questions
+   * - Updates user's total XP
+   */
   answerQuestion(
     questionId: string,
     correct: boolean,
@@ -88,6 +115,7 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
     let questionText = "";
     let correctAnswer: string | boolean | null = null;
 
+    // Extract question snapshot for persistence and review
     if (questionData) {
       switch (questionData.type) {
         case "truefalse":
@@ -129,6 +157,7 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
     );
   },
 
+  /** Resets the game to the initial state */
   resetGame(): void {
     const initial = get().initialLevels;
     set({
@@ -143,6 +172,11 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
     });
   },
 
+  /**
+   * Retries a level:
+   * - Resets current question index
+   * - Removes any progress from that level in completed and answered questions
+   */
   retryLevel(index: number): void {
     const s = get();
     const levelQuestions: string[] = s.levels[index]?.questionIDs ?? [];
@@ -158,14 +192,20 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
     });
   },
 
+  /** Updates the current user */
   setUser(user: User): void {
     set({ user });
   },
 
+  /** Marks the tutorial as completed */
   completeTutorial(): void {
     set({ tutorialCompleted: true });
   },
 
+  /**
+   * Advances to the next question.
+   * If at the end of the level, marks the level as complete in progress store.
+   */
   nextQuestion(): void {
     set((s): Partial<GameStore> => {
       const level = s.levels[s.currentLevelIndex];
@@ -184,6 +224,10 @@ const gameStoreCreator: StateCreator<GameStore> = (set, get): GameStore => ({
   },
 });
 
+/**
+ * Persisted game store.
+ * Zustand store with local persistence via `zustand/middleware`.
+ */
 export const useGameStore = create<GameStore>()(
   persist<GameStore>(gameStoreCreator, {
     name: "climaquest-game",

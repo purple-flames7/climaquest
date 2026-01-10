@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, Info } from "lucide-react";
+import type { FC } from "react";
 
-interface FeedbackBannerProps {
+export interface FeedbackBannerProps {
   correct?: boolean;
   show?: boolean;
   explanation?: string;
 }
 
-export const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
+export const FeedbackBanner: FC<FeedbackBannerProps> = ({
   correct,
   show = false,
   explanation = "",
@@ -17,17 +18,17 @@ export const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
 
   const variants = {
     correct: {
-      bg: "bg-green-100 border-green-400 text-green-700",
-      icon: <CheckCircle className="w-6 h-6 text-green-600" />,
+      bg: "bg-secondary border-primary text-primary",
+      icon: <CheckCircle className="w-6 h-6 text-primary" />,
       label: "Correct!",
     },
     wrong: {
-      bg: "bg-red-100 border-red-400 text-red-700",
+      bg: "bg-red-50 border-red-400 text-red-700",
       icon: <XCircle className="w-6 h-6 text-red-600" />,
       label: "Not quite right",
     },
     neutral: {
-      bg: "bg-gray-100 border-gray-300 text-gray-700",
+      bg: "bg-secondary border-gray-300 text-gray-700",
       icon: <Info className="w-6 h-6 text-gray-500" />,
       label: "Info",
     },

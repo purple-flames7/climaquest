@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { FC, ReactNode } from "react";
+import { PageLoader } from "./page-loader";
 
 interface LoadableProps {
   children: ReactNode;
@@ -9,15 +10,12 @@ export const Loadable: FC<LoadableProps> = ({ children }) => (
   <Suspense
     fallback={
       <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          fontSize: "1.2rem",
-        }}
+        className="flex flex-col items-center justify-center min-h-screen text-center"
+        role="status"
+        aria-busy="true"
       >
-        Loading...
+        <PageLoader />
+        <p className="mt-4 text-text-muted">Loading content…</p>
       </div>
     }
   >

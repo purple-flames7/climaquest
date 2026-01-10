@@ -3,6 +3,10 @@ import { Routes, Route } from "react-router";
 import { RoutePaths } from "./route-path";
 import { Loadable, PageWrapper, PageLoader } from "../components";
 
+/**
+ * Lazy-loaded screens for route-based code splitting.
+ * This keeps inital bundle size small.
+ */
 const SplashScreen = lazy(() => import("../screens/splash-screen"));
 const HomeScreen = lazy(() => import("../screens/home-screen"));
 const TutorialScreen = lazy(() => import("../screens/tutorial-screen"));
@@ -11,6 +15,13 @@ const QuizScreen = lazy(() => import("../screens/quiz-screen"));
 const ResultsScreen = lazy(() => import("../screens/results-screen"));
 const ReviewScreen = lazy(() => import("../screens/review-screen"));
 
+/**
+ * Defines all application routes.
+ * Routes are wrapped with:
+ * Sunspense: handles lazy-loading fallback
+ * Loadable: additional async safety / UX
+ * PageWrapper: consistent screen layout
+ */
 export const AppRoutes = () => (
   <Suspense fallback={<PageLoader />}>
     <Routes>

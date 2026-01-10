@@ -1,53 +1,51 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import logoIcon from "../assets/icons/icon-logo.webp";
 
-export default function SplashScreen() {
+const SPLASH_DELAY_MS = 3000;
+const TITLE = "CLIMAQUEST";
+
+export default function SplashScreen(): JSX.Element {
   const navigate = useNavigate();
-  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState<boolean>(false);
 
-  const text = "CLIMAQUEST";
-
-  // Navigate after logo is loaded + 3s delay
   useEffect(() => {
     if (!logoLoaded) return;
-    const timer = setTimeout(() => {
-      navigate("/home");
-    }, 3000);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => navigate("/home"), SPLASH_DELAY_MS);
+    return () => clearTimeout(t);
   }, [logoLoaded, navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-emerald-100 to-teal-200">
-      {/* Logo Icon */}
+    <main
+      role="main"
+      className="min-h-screen flex flex-col items-center justify-center spacing-section bg-gradient-to-b from-emerald-100 to-teal-200"
+    >
       <motion.img
         src={logoIcon}
-        alt="Logo Icon"
+        alt="ClimaQuest logo"
         className="w-28 h-28 mb-6"
-        initial={{ scale: 0, rotate: -45, opacity: 0 }}
+        initial={{ scale: 0, rotate: -35, opacity: 0 }}
         animate={logoLoaded ? { scale: 1, rotate: 0, opacity: 1 } : {}}
-        transition={{ duration: 1.2, ease: "easeOut" }}
+        transition={{ duration: 1.1, ease: "easeOut" }}
         onLoad={() => setLogoLoaded(true)}
       />
 
-      {/* Letter-by-letter text animation */}
-      <div className="flex space-x-1 text-[22px] md:text-[24px] tracking-[0.08em] font-raleway font-black text-[#008038] leading-snug">
-        {text.split("").map((char, index) => (
+      <div
+        aria-hidden="true"
+        className="flex space-x-1 text-lg md:text-xl tracking-wider font-black text-primary"
+      >
+        {TITLE.split("").map((c, i) => (
           <motion.span
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
+            key={i}
+            initial={{ opacity: 0, y: 16 }}
             animate={logoLoaded ? { opacity: 1, y: 0 } : {}}
-            transition={{
-              delay: 0.3 + index * 0.1,
-              duration: 0.5,
-              ease: "easeOut",
-            }}
+            transition={{ delay: 0.3 + i * 0.06, duration: 0.45 }}
           >
-            {char}
+            {c}
           </motion.span>
         ))}
       </div>
-    </div>
+    </main>
   );
 }
