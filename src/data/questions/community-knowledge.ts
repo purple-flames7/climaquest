@@ -1,7 +1,13 @@
 import type { Question } from "../../types/question";
 
+/**
+ * Community Knowledge Questions
+ * Grouped by difficulty: Easy, Medium, Hard
+ */
 export const communityKnowledgeQuestions: Question[] = [
-  // Easy (10)
+  /**
+   * Easy questions
+   */
   {
     id: "CK-E1",
     type: "mcq",
@@ -132,7 +138,9 @@ export const communityKnowledgeQuestions: Question[] = [
     difficulty: "easy",
   },
 
-  // Medium (10)
+  /**
+   * Medium Questions
+   */
   {
     id: "CK-M1",
     type: "mcq",
@@ -257,7 +265,9 @@ export const communityKnowledgeQuestions: Question[] = [
     difficulty: "medium",
   },
 
-  // Hard (10)
+  /**
+   * Hard Questions
+   */
   {
     id: "CK-H1",
     type: "mcq",

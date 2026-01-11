@@ -1,4 +1,3 @@
-// src/hooks/use-swipe.ts
 import { useEffect, useRef, useCallback } from "react";
 
 interface SwipeOptions {

@@ -1,8 +1,13 @@
-// src/data/climateScienceQuestions.ts
 import type { Question } from "../../types/question";
 
+/**
+ * Climate Science Questions
+ * Grouped by difficulty: Easy, Medium, Hard
+ */
 export const climateScienceQuestions: Question[] = [
-  // EASY
+  /**
+   * Easy Questions
+   */
   {
     id: "CS-E1",
     type: "mcq",
@@ -120,7 +125,9 @@ export const climateScienceQuestions: Question[] = [
     difficulty: "easy",
   },
 
-  // MEDIUM
+  /**
+   * Medium Questions
+   */
   {
     id: "CS-M1",
     type: "mcq",
@@ -240,7 +247,9 @@ export const climateScienceQuestions: Question[] = [
     difficulty: "medium",
   },
 
-  // HARD
+  /**
+   * Hard Questions
+   */
   {
     id: "CS-H1",
     type: "shortanswer",

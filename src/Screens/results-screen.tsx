@@ -7,37 +7,55 @@ import { useGameStore, useUserStore, useProgressStore } from "../stores";
 import { Award, Star, Zap } from "lucide-react";
 import { badges as allBadges } from "../data/badges";
 
+/**
+ * ResultsScreen
+ * -------------
+ * Displays a summary after completing a level:
+ * - XP earned
+ * - Questions answered & accuracy
+ * - Badge earned (if any)
+ * - Confetti animation for special achievements
+ * - Navigation to next level review or progress map
+ */
 export default function ResultsScreen() {
   const navigate = useNavigate();
-  const { width, height } = useWindowSize();
+  const { width, height } = useWindowSize(); // for confetti dimensions
 
+  // Global stores
   const { levels, currentLevelIndex, answeredQuestions, selectLevel } =
     useGameStore();
   const { addXP, addBadge } = useUserStore();
   const { markLevelCompleted } = useProgressStore();
 
+  // Current level reference
   const level = levels[currentLevelIndex];
 
-  // Compute results
+  // --- Compute results for this level ---
   const levelAnswers = level
     ? answeredQuestions.filter((a) => level.questionIDs.includes(a.id))
     : [];
   const totalQuestions = level ? level.questionIDs.length : 0;
   const correctCount = levelAnswers.filter((a) => a.correct).length;
   const questionsAnswered = levelAnswers.length;
-  const xpPerQuestion = level?.xpReward ?? 10;
+  const xpPerQuestion = level?.xpReward ?? 10; // fallback XP per question
   const xpEarned = correctCount * xpPerQuestion;
   const correctRatio =
     totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const isLastLevel = currentLevelIndex + 1 >= levels.length;
 
-  //  Badge logic
+  // --- Badge logic ---
+  // Award "Accuracy Ace" badge for 100% correct answers
   const earnedBadge =
     correctRatio === 100
       ? allBadges.find((b) => b.name === "Accuracy Ace")
       : null;
 
-  // Update stores once on mount
+  /**
+   * Update global stores on mount
+   * - Add earned XP
+   * - Mark level as completed
+   * - Award badge if applicable
+   */
   useEffect(() => {
     if (!level) return;
     addXP(xpEarned);
@@ -46,7 +64,7 @@ export default function ResultsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level]);
 
-  // --- Icons ---
+  // --- Icon mapping for badges ---
   const getIcon = (iconName?: string) => {
     switch (iconName) {
       case "Award":
@@ -60,7 +78,11 @@ export default function ResultsScreen() {
     }
   };
 
-  // Navigation
+  /**
+   * Navigate to next screen
+   * - If more levels exist → review answers
+   * - If last level → back to progress map
+   */
   const handleNext = () => {
     if (!level) return;
 
@@ -77,7 +99,7 @@ export default function ResultsScreen() {
     }
   };
 
-  // Fallback render 
+  // --- Fallback for missing level ---
   if (!level) {
     return (
       <div className="flex items-center justify-center min-h-screen text-emerald-700">
@@ -88,6 +110,7 @@ export default function ResultsScreen() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6 relative">
+      {/* Confetti animation when a badge is earned */}
       {earnedBadge && (
         <Confetti
           width={width}
@@ -97,19 +120,20 @@ export default function ResultsScreen() {
         />
       )}
 
+      {/* Main results card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-10 w-full max-w-lg text-center flex flex-col items-center space-y-6"
       >
+        {/* Header */}
         <h2 className="text-3xl font-bold text-emerald-700">
           {isLastLevel ? "All Levels Complete!" : "Level Complete!"}
         </h2>
-
         <p className="text-gray-700 font-medium text-lg">{level.title}</p>
 
-        {/* XP Summary */}
+        {/* XP Earned */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -120,6 +144,7 @@ export default function ResultsScreen() {
           <p className="text-sm opacity-90">Earned this round</p>
         </motion.div>
 
+        {/* Questions answered & accuracy */}
         <div className="w-full space-y-2 text-gray-700 font-medium">
           <p>
             Questions Answered:{" "}
@@ -135,7 +160,7 @@ export default function ResultsScreen() {
           </p>
         </div>
 
-        {/* Badge */}
+        {/* Badge display */}
         {earnedBadge && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -151,6 +176,7 @@ export default function ResultsScreen() {
           </motion.div>
         )}
 
+        {/* Next / Review button */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={handleNext}

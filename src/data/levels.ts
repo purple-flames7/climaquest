@@ -2,7 +2,11 @@ import type { Level } from "../types";
 import { allQuestionsById } from "./all-questions";
 
 /**
- * Game categories
+ * Canonical list of game categories.
+ *
+ * `as const` ensures:
+ * - Literal string types
+ * - Compile-time safety when matching question.category
  */
 export const categories = [
   "Climate Science",
@@ -13,7 +17,9 @@ export const categories = [
 ] as const;
 
 /**
- * Level titles (30 total)
+ * Human-readable level titles.
+ * Order matters: index maps directly to level number.
+ * MUST remain length 30 to match level generation logic.
  */
 const levelTitles: string[] = [
   "Sprout of Awareness",
@@ -49,28 +55,66 @@ const levelTitles: string[] = [
 ];
 
 /**
- * Build levels deterministically based on category and difficulty
+ * Builds the full list of game levels deterministically.
+ *
+ * Design constraints:
+ * - 30 total levels
+ * - 5 categories × 6 levels each
+ * - 5 questions per level
+ * - Difficulty escalates every 10 levels
+ *
+ * This file is a SOURCE OF TRUTH:
+ * It should fail fast if data assumptions are violated.
  */
 export const levels: Level[] = (() => {
   const allQuestions = Object.values(allQuestionsById);
 
+  //  Guardrail: titles must match level count
+  if (levelTitles.length !== 30) {
+    throw new Error(`Expected 30 level titles, got ${levelTitles.length}`);
+  }
+
   return Array.from({ length: 30 }, (_, i) => {
-    // Determine difficulty
     const difficulty: "easy" | "medium" | "hard" =
       i >= 20 ? "hard" : i >= 10 ? "medium" : "easy";
 
-    // Determine category (6 levels per category)
+    /**
+     * Category progression:
+     * Every 6 levels switches category
+     */
     const categoryIndex = Math.floor(i / 6);
-    const category = categories[categoryIndex] ?? categories[0];
+    const category = categories[categoryIndex];
 
-    // Get all questions in this category
+    if (!category) {
+      throw new Error(
+        `Invalid category index ${categoryIndex} at level ${i + 1}`
+      );
+    }
+
+    // Filter questions for this category
     const categoryQuestions = allQuestions.filter(
       (q) => q.category === category
     );
 
-    // Slice questions for this level (5 per level max)
+    // Guardrail: each category must supply 30 questions (6 × 5)
+    if (categoryQuestions.length < 30) {
+      throw new Error(
+        `Category "${category}" has ${categoryQuestions.length} questions. Expected at least 30.`
+      );
+    }
+
+    /**
+     * Slice 5 questions per level within the category
+     */
     const start = (i % 6) * 5;
     const levelQuestions = categoryQuestions.slice(start, start + 5);
+
+    // 🔒 Guardrail: every level must have exactly 5 questions
+    if (levelQuestions.length !== 5) {
+      throw new Error(
+        `Level ${i + 1} has ${levelQuestions.length} questions instead of 5`
+      );
+    }
 
     return {
       id: i + 1,

@@ -3,13 +3,25 @@ import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
 import { useGameStore, useProgressStore } from "../stores";
 
-export default function ProgressMap() {
+/**
+ * ProgressMap
+ * Visual map of all game levels, organized by category.
+ * Responsibilities:
+ * - Show unlocked, completed, and current levels
+ * - Allow player to select levels
+ * - Auto-scroll to last unlocked level
+ * - Animate transitions and level connections
+ */
+export default function ProgressMap(): JSX.Element {
   const { levels, currentLevelIndex, selectLevel } = useGameStore();
   const { unlockedLevels, completedLevels, markLevelCompleted } =
     useProgressStore();
   const navigate = useNavigate();
+
+  /** Reference to scrollable container for auto-scrolling */
   const containerRef = useRef<HTMLDivElement>(null);
 
+  /** Human-readable category titles (matches levels) */
   const categoryTitles = [
     "Climate Science",
     "Climate Justice & Inequality",
@@ -18,6 +30,7 @@ export default function ProgressMap() {
     "Climate Solutions",
   ];
 
+  /** Background gradients per category for visual separation */
   const categoryGradients = [
     "from-sky-100 via-sky-200 to-emerald-100",
     "from-amber-100 via-orange-100 to-rose-100",
@@ -26,16 +39,23 @@ export default function ProgressMap() {
     "from-emerald-100 via-teal-100 to-cyan-100",
   ];
 
+  /** Split levels into 5 categories, 6 levels each */
   const groupedLevels = Array.from({ length: 5 }, (_, i) =>
     levels.slice(i * 6, i * 6 + 6)
   );
 
+  /**
+   * Auto-scroll to last unlocked level on mount
+   * - Uses requestAnimationFrame for smoother rendering
+   * - Adds a small timeout to allow DOM to update
+   */
   useEffect(() => {
     if (!containerRef.current || levels.length === 0) return;
+
     const id = setTimeout(() => {
       requestAnimationFrame(() => {
         const el = containerRef.current!;
-        el.scrollTop = el.scrollHeight;
+        el.scrollTop = el.scrollHeight; // start at bottom
 
         if (unlockedLevels && unlockedLevels.length > 0) {
           const lastUnlockedLevelId = Math.max(...unlockedLevels);
@@ -47,15 +67,23 @@ export default function ProgressMap() {
           ) as HTMLElement | null;
           if (target) {
             setTimeout(() => {
+              // Smooth scroll into view for the last unlocked level
               target.scrollIntoView({ behavior: "smooth", block: "center" });
             }, 80);
           }
         }
       });
     }, 30);
+
     return () => clearTimeout(id);
   }, [levels.length, unlockedLevels]);
 
+  /**
+   * Handle level selection
+   * - Only unlocked levels are selectable
+   * - Mark level completed if not already
+   * - Navigate to quiz screen, passing level data
+   */
   const handleLevelClick = (levelIndex: number) => {
     const level = levels[levelIndex];
     if (!unlockedLevels.includes(level.id)) return;
@@ -71,6 +99,7 @@ export default function ProgressMap() {
     });
   };
 
+  // Loading state when levels are not yet fetched
   if (!levels.length) {
     return (
       <div className="h-screen flex items-center justify-center text-gray-700">
@@ -79,6 +108,7 @@ export default function ProgressMap() {
     );
   }
 
+  /** Reverse order so levels render bottom → top visually */
   const reversedGrouped = [...groupedLevels].slice().reverse();
 
   return (
@@ -89,7 +119,7 @@ export default function ProgressMap() {
       {reversedGrouped.map((categoryLevels, revIdx) => {
         const categoryIndex = groupedLevels.length - 1 - revIdx;
 
-        // reverse order inside category so it goes upward
+        // Reverse order inside category so levels go upward visually
         const orderedLevels = [...categoryLevels].reverse();
 
         return (
@@ -97,6 +127,7 @@ export default function ProgressMap() {
             key={categoryIndex}
             className={`relative py-16 px-6 bg-gradient-to-b ${categoryGradients[categoryIndex]}`}
           >
+            {/* Category title */}
             <motion.h2
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -108,13 +139,15 @@ export default function ProgressMap() {
 
             <div className="relative flex flex-col items-center space-y-16">
               {orderedLevels.map((level, localIdx) => {
-                const globalIndex = categoryIndex * 6 + (5 - localIdx); // adjust index since we reversed
+                const globalIndex = categoryIndex * 6 + (5 - localIdx); // corrected for reversed order
                 const isUnlocked = unlockedLevels.includes(level.id);
                 const isCompleted = completedLevels.includes(level.id);
                 const isCurrent = globalIndex === currentLevelIndex;
-                const alignLeft = localIdx % 2 === 0;
+                const alignLeft = localIdx % 2 === 0; // zig-zag layout
 
                 const nextLevelExists = !!orderedLevels[localIdx + 1];
+
+                /** Shadow glow based on difficulty */
                 const difficultyGlow =
                   level.difficulty === "easy"
                     ? "shadow-[inset_0_0_10px_#86efac]"
@@ -133,7 +166,7 @@ export default function ProgressMap() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: localIdx * 0.03 }}
                   >
-                    {/* connector above current circle */}
+                    {/* Connector above each level */}
                     {nextLevelExists && (
                       <motion.div
                         className={`absolute -top-20 ${
@@ -151,6 +184,7 @@ export default function ProgressMap() {
                       />
                     )}
 
+                    {/* Level button */}
                     <motion.button
                       onClick={() => handleLevelClick(globalIndex)}
                       disabled={!isUnlocked}
@@ -178,6 +212,7 @@ export default function ProgressMap() {
                       {isCompleted ? "✓" : level.id}
                     </motion.button>
 
+                    {/* Level title */}
                     <span className="mt-3 text-center text-emerald-900 font-semibold max-w-[140px] leading-tight text-sm">
                       {level.title}
                     </span>

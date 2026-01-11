@@ -1,8 +1,13 @@
-// src/data/queerClimateQuestions.ts
 import type { Question } from "../../types";
 
+/**
+ * Queer Climate  Questions
+ * Grouped by difficulty: Easy, Medium, Hard
+ */
 export const queerClimateQuestions: Question[] = [
-  // EASY
+  /**
+   * Easy Questions
+   */
   {
     id: "QC-E1",
     type: "mcq",
@@ -138,7 +143,9 @@ export const queerClimateQuestions: Question[] = [
     difficulty: "easy",
   },
 
-  // MEDIUM
+  /**
+   * Medium Questions
+   */
   {
     id: "QC-M1",
     type: "mcq",
@@ -279,7 +286,9 @@ export const queerClimateQuestions: Question[] = [
     difficulty: "medium",
   },
 
-  // HARD
+  /**
+   * Hard Questions
+   */
   {
     id: "QC-H1",
     type: "shortanswer",

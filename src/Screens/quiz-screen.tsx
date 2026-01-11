@@ -10,7 +10,11 @@ import { isMCQ, isTrueFalse, isShortAnswer, sanitizeInput } from "../utils";
 // Reusable components
 import { ShortAnswerInput, FeedbackBanner } from "../components";
 
-// AnswerOptions inline for clarity
+/**
+ * AnswerOptions
+ * Inline component for rendering multiple-choice or true/false buttons.
+ * Handles visual feedback for selected, correct, and wrong options.
+ */
 function AnswerOptions({
   options,
   selected,
@@ -31,10 +35,12 @@ function AnswerOptions({
         const isCorrect = showFeedback && option === correctAnswer;
         const isWrong = showFeedback && isSelected && option !== correctAnswer;
 
+        /** Base button styling */
         const baseClasses =
           "w-full py-3 px-4 rounded-xl font-medium border transition-all duration-300 ease-in-out shadow-sm";
-        let stateClasses = "";
 
+        /** State-specific styling: correct / wrong / selected / default */
+        let stateClasses = "";
         if (isCorrect) {
           stateClasses =
             "bg-emerald-100 text-emerald-900 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]";
@@ -53,7 +59,7 @@ function AnswerOptions({
           <motion.button
             key={option}
             onClick={() => onSelect(option)}
-            disabled={showFeedback}
+            disabled={showFeedback} // prevent selection after answer is submitted
             className={`${baseClasses} ${stateClasses}`}
             whileHover={!showFeedback ? { scale: 1.02 } : {}}
             whileTap={!showFeedback ? { scale: 0.98 } : {}}
@@ -66,9 +72,20 @@ function AnswerOptions({
   );
 }
 
+/**
+ * QuizScreen
+ * ----------
+ * Handles the entire quiz experience for the current level:
+ * - Displays current question (MCQ, True/False, or Short Answer)
+ * - Handles answer submission & feedback
+ * - Shows confetti on correct answers
+ * - Progress tracking and navigation to next question or results
+ */
 export default function QuizScreen() {
   const navigate = useNavigate();
-  const { width, height } = useWindowSize();
+  const { width, height } = useWindowSize(); // for confetti canvas
+
+  // Global game store
   const {
     levels,
     currentLevelIndex,
@@ -77,28 +94,38 @@ export default function QuizScreen() {
     nextQuestion,
   } = useGameStore();
 
+  // Local UI state
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
+  /** Get current level and question */
   const currentLevel = levels[currentLevelIndex];
   if (!currentLevel) return <div>Loading level...</div>;
 
   const question = currentQuestion();
   if (!question) return <div>Loading question...</div>;
 
+  /** Determine answer options for MCQ / TrueFalse */
   const answerOptions = isMCQ(question)
     ? question.options
     : isTrueFalse(question)
     ? ["true", "false"]
     : [];
 
+  /** Question text differs slightly for True/False vs others */
   const questionText = isTrueFalse(question)
     ? question.statement
     : question.question;
 
-  //  Handle answer submission
+  /**
+   * Handles answer selection/submission
+   * - Determines correctness based on question type
+   * - Shows feedback banner
+   * - Triggers confetti for correct answers
+   * - Updates global store
+   */
   const handleSubmitAnswer = (answer: string) => {
     if (showFeedback) return;
 
@@ -122,13 +149,13 @@ export default function QuizScreen() {
 
     if (correct) {
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 1800);
+      setTimeout(() => setShowConfetti(false), 1800); // confetti duration
     }
 
     answerQuestion(question.id, correct, answer, question);
   };
 
-  // Handle next question
+  /** Handle moving to next question or navigating to results */
   const handleNext = () => {
     setSelectedAnswer(null);
     setShowFeedback(false);
@@ -144,6 +171,7 @@ export default function QuizScreen() {
     }
   };
 
+  /** Progress bar percent for current question */
   const progressPercent =
     ((currentLevel.questionIDs.indexOf(question.id) + 1) /
       currentLevel.questionIDs.length) *
@@ -151,6 +179,7 @@ export default function QuizScreen() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200 p-6">
+      {/* Confetti for correct answers */}
       {showConfetti && (
         <Confetti
           width={width}
@@ -160,13 +189,14 @@ export default function QuizScreen() {
         />
       )}
 
+      {/* Main quiz container */}
       <motion.div
         className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-xl flex flex-col space-y-6"
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        {/* Level Title & Progress */}
+        {/* Level Title & Progress Bar */}
         <div>
           <h2 className="text-2xl font-bold text-emerald-700 text-center mb-3">
             {currentLevel.title}
@@ -180,10 +210,10 @@ export default function QuizScreen() {
           </div>
         </div>
 
-        {/* Question */}
+        {/* Question Display */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={question.id}
+            key={question.id} // ensures motion animation on question change
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
@@ -193,7 +223,7 @@ export default function QuizScreen() {
               {questionText}
             </p>
 
-            {/* Multiple Choice / TrueFalse */}
+            {/* Render MCQ / TrueFalse options */}
             {answerOptions.length > 0 && (
               <AnswerOptions
                 options={answerOptions}
@@ -212,7 +242,7 @@ export default function QuizScreen() {
               />
             )}
 
-            {/* Short Answer */}
+            {/* Render Short Answer input */}
             {isShortAnswer(question) && (
               <ShortAnswerInput
                 correctAnswer={question.acceptableAnswers[0]}
@@ -222,14 +252,14 @@ export default function QuizScreen() {
               />
             )}
 
-            {/* Feedback Banner */}
+            {/* Feedback banner */}
             <FeedbackBanner
               correct={isCorrect ?? undefined}
               show={showFeedback}
               explanation={question.explanation}
             />
 
-            {/* Next Button */}
+            {/* Next Question Button */}
             {showFeedback && (
               <motion.button
                 onClick={handleNext}
@@ -243,7 +273,7 @@ export default function QuizScreen() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Footer Progress */}
+        {/* Footer: current question / total questions */}
         <div className="text-center text-gray-700 font-medium">
           Question {currentLevel.questionIDs.indexOf(question.id) + 1} /{" "}
           {currentLevel.questionIDs.length}

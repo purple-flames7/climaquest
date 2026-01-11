@@ -2,6 +2,15 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router";
 import { useGameStore, useProgressStore } from "../stores";
 
+/**
+ * ReviewScreen
+ * ------------
+ * Shows a detailed breakdown of the player's answers for the current level.
+ * Features:
+ * - Lists all answered questions with user's answer vs correct answer
+ * - Highlights correct/incorrect responses
+ * - Provides buttons to retry the level, go to next level, or go back to the progress map
+ */
 export default function ReviewScreen() {
   const navigate = useNavigate();
   const {
@@ -13,6 +22,7 @@ export default function ReviewScreen() {
   } = useGameStore();
   const { unlockedLevels } = useProgressStore();
 
+  // --- Handle case where no answers exist yet ---
   if (!answeredQuestions || answeredQuestions.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-100 to-teal-200">
@@ -29,7 +39,7 @@ export default function ReviewScreen() {
     );
   }
 
-  // Filter only questions from the current level
+  // --- Filter answered questions for the current level ---
   const level = levels[currentLevelIndex];
   const levelQuestionIds = level.questionIDs;
 
@@ -39,6 +49,7 @@ export default function ReviewScreen() {
 
   const isLastLevel = currentLevelIndex + 1 >= levels.length;
 
+  // --- Button handlers ---
   const handleRetryLevel = () => {
     retryLevel(currentLevelIndex);
     const level = levels[currentLevelIndex];
@@ -64,11 +75,13 @@ export default function ReviewScreen() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-teal-100 p-6">
+      {/* Container for review card */}
       <div className="max-w-3xl mx-auto bg-white/90 rounded-3xl shadow-lg p-8 space-y-6">
         <h1 className="text-3xl font-bold text-emerald-700 text-center mb-6">
           Review Your Answers
         </h1>
 
+        {/* Loop through each answered question */}
         {levelAnsweredQuestions.map((q, index) => (
           <motion.div
             key={q.id}
@@ -77,10 +90,12 @@ export default function ReviewScreen() {
             transition={{ delay: index * 0.05 }}
             className="bg-white rounded-2xl shadow p-6 space-y-4 border border-emerald-100"
           >
+            {/* Question text */}
             <h3 className="text-lg font-semibold text-gray-800">
               {index + 1}. {q.questionText}
             </h3>
 
+            {/* Multiple choice options */}
             {q.options && q.options.length > 0 && (
               <ul className="space-y-1">
                 {q.options.map((opt, i) => (
@@ -100,6 +115,7 @@ export default function ReviewScreen() {
               </ul>
             )}
 
+            {/* User answer & correct answer display */}
             <div className="text-gray-700 space-y-1">
               <p>
                 <span className="font-semibold">Your Answer:</span>{" "}
@@ -124,6 +140,7 @@ export default function ReviewScreen() {
               </p>
             </div>
 
+            {/* Result label */}
             <p
               className={`font-semibold mt-2 ${
                 q.correct ? "text-emerald-600" : "text-red-600"
@@ -136,6 +153,7 @@ export default function ReviewScreen() {
 
         {/* Navigation buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
+          {/* Next Level / Finish Journey */}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleNextLevel}
@@ -144,6 +162,7 @@ export default function ReviewScreen() {
             {isLastLevel ? "Finish Journey" : "Next Level"}
           </motion.button>
 
+          {/* Retry Level */}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleRetryLevel}
@@ -152,6 +171,7 @@ export default function ReviewScreen() {
             Retry Level
           </motion.button>
 
+          {/* Go to Progress Map */}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleProgressMap}
